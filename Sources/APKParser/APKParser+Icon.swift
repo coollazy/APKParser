@@ -10,10 +10,10 @@ extension APKParser {
         do {
             let manifestBuilder = try ManifestBuilder(androidManifestURL)
             
-            try APKIconBuilder(sourceURL: iconURL, iconType: .rectangle(iconName: manifestBuilder.iconName))
+            try IconBuilder(sourceURL: iconURL, iconType: .rectangle(iconName: manifestBuilder.iconName))
                 .build(toResDirectory: resDirectory)
         }
-        catch let error as APKIconBuilderError {
+        catch let error as IconBuilderError {
             switch error {
             case .invalidImageFormat:
                 throw APKParserError.invalidIconFormat
@@ -39,10 +39,10 @@ extension APKParser {
         do {
             let manifestBuilder = try ManifestBuilder(androidManifestURL)
             
-            try APKIconBuilder(sourceURL: roundIconURL, iconType: .round(iconName: manifestBuilder.iconRoundName))
+            try IconBuilder(sourceURL: roundIconURL, iconType: .round(iconName: manifestBuilder.iconRoundName))
                 .build(toResDirectory: resDirectory)
         }
-        catch let error as APKIconBuilderError {
+        catch let error as IconBuilderError {
             switch error {
             case .invalidImageFormat:
                 throw APKParserError.invalidIconFormat

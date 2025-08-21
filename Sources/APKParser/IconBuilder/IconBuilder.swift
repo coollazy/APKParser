@@ -4,9 +4,9 @@ import Image
 /**
  用來產生  Android APK 使用的圖檔
  */
-public class APKIconBuilder {
+public class IconBuilder {
     public let tempDirectory = FileManager.default.temporaryDirectory
-        .appendingPathComponent("APKIconBuilder")
+        .appendingPathComponent("IconBuilder\(UUID().uuidString)")
     
     private var sourceURL: URL
     private let iconType: Icon
@@ -24,13 +24,13 @@ public class APKIconBuilder {
     
     private func isValidImage(imageURL: URL) throws {
         guard let image = try? Image(url: imageURL) else {
-            throw APKIconBuilderError.invalidImageFormat
+            throw IconBuilderError.invalidImageFormat
         }
         guard image.format == .png else {
-            throw APKIconBuilderError.invalidImageFormat
+            throw IconBuilderError.invalidImageFormat
         }
         guard image.size?.width == 1024, image.size?.height == 1024 else {
-            throw APKIconBuilderError.invalidImageSize
+            throw IconBuilderError.invalidImageSize
         }
     }
     
@@ -50,7 +50,7 @@ public class APKIconBuilder {
     }
 }
 
-extension APKIconBuilder {
+extension IconBuilder {
     private func download(url: URL) throws -> URL {
         let downloadURL = tempDirectory
             .appendingPathComponent("download-" + UUID().uuidString)
@@ -61,7 +61,7 @@ extension APKIconBuilder {
         }
         
         guard let data = try? Data(contentsOf: url) else {
-            throw APKIconBuilderError.downloadImageFailed
+            throw IconBuilderError.downloadImageFailed
         }
         try data.write(to: downloadURL)
         
@@ -70,7 +70,7 @@ extension APKIconBuilder {
 }
 
 // MARK: - Android 專用的 icon 檔名，路徑跟尺寸
-extension APKIconBuilder {
+extension IconBuilder {
     public enum Icon {
         case rectangle(iconName: String?)
         case round(iconName: String?)
