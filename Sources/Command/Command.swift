@@ -33,7 +33,7 @@ public struct Command {
         outputPipe.fileHandleForReading.readabilityHandler = { fileHandle in
             let data = fileHandle.availableData
             if !data.isEmpty {
-                if let output = String(data: data, encoding: .utf8), logEnable {
+                if logEnable, let output = String(data: data, encoding: .utf8) {
                     print("\(output.trimmingCharacters(in: .whitespacesAndNewlines))")
                 }
             }
@@ -43,7 +43,7 @@ public struct Command {
         errorPipe.fileHandleForReading.readabilityHandler = { fileHandle in
             let data = fileHandle.availableData
             if !data.isEmpty {
-                if let error = String(data: data, encoding: .utf8), logEnable {
+                if logEnable, let error = String(data: data, encoding: .utf8) {
                     print("Error: \(error.trimmingCharacters(in: .whitespacesAndNewlines))")
                 }
             }

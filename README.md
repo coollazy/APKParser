@@ -1,5 +1,10 @@
 # APKParser
 
+![Platform](https://img.shields.io/badge/platform-macOS-blue)
+![Swift](https://img.shields.io/badge/Swift-5.9-orange)
+![SPM](https://img.shields.io/badge/SPM-Supported-green)
+[![CI](https://github.com/coollazy/APKParser/actions/workflows/ci.yml/badge.svg)](https://github.com/coollazy/APKParser/actions/workflows/ci.yml)
+
 Android APK 反組譯及重新打包
 
 ## Enviorment
@@ -79,22 +84,6 @@ Android APK 反組譯及重新打包
 	```
 	>
 
-### Linux
-
-***JRE***
-
-***apktool***
-
-***Android SDK Command Line Tools 或 Android Studio***
-
-### Docker
-
-***JRE***
-
-***apktool***
-
-***Android SDK Command Line Tools 或 Android Studio***
-
 ## Usage
 
 ***Swift Package Manager***
@@ -102,7 +91,7 @@ Android APK 反組譯及重新打包
 - Package.swift 的 dependencies 內添加
 	
 	```swift
-	.package(name: "APKParser", url: "git@gitlab.baifu-tech.net:ios/components/apkbuilder.git", from: "1.5.0"),
+	.package(name: "APKParser", url: "https://github.com/coollazy/APKParser.git", from: "1.0.0"),
 	```
 
 ### APKParser
@@ -110,7 +99,7 @@ Android APK 反組譯及重新打包
 - 反組譯 APK
 
 	```swift
-	// 初始化 builder
+	// 初始化 Parser
 	let apkURL: URL = URL(fileURLWithPath: "your_original_apk_local_file_path")
 	let parser = try APKParser(apkURL: apkURL)
 	```
