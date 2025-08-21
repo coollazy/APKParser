@@ -1,5 +1,10 @@
 # APKParser
 
+![Platform](https://img.shields.io/badge/platform-macOS-blue)
+![Swift](https://img.shields.io/badge/Swift-5.9-orange)
+![SPM](https://img.shields.io/badge/SPM-Supported-green)
+[![CI](https://github.com/coollazy/APKParser/actions/workflows/ci.yml/badge.svg)](https://github.com/coollazy/APKParser/actions/workflows/ci.yml)
+
 Android APK 反組譯及重新打包
 
 ## Enviorment
@@ -78,22 +83,6 @@ Android APK 反組譯及重新打包
 	apksigner --help
 	```
 	>
-
-### Linux
-
-***JRE***
-
-***apktool***
-
-***Android SDK Command Line Tools 或 Android Studio***
-
-### Docker
-
-***JRE***
-
-***apktool***
-
-***Android SDK Command Line Tools 或 Android Studio***
 
 ## Usage
 
