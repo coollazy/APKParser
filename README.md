@@ -91,7 +91,7 @@ Android APK 反組譯及重新打包
 - Package.swift 的 dependencies 內添加
 	
 	```swift
-	.package(name: "APKParser", url: "git@gitlab.baifu-tech.net:ios/components/apkbuilder.git", from: "1.5.0"),
+	.package(name: "APKParser", url: "https://github.com/coollazy/APKParser.git", from: "1.0.0"),
 	```
 
 ### APKParser
@@ -99,7 +99,7 @@ Android APK 反組譯及重新打包
 - 反組譯 APK
 
 	```swift
-	// 初始化 builder
+	// 初始化 Parser
 	let apkURL: URL = URL(fileURLWithPath: "your_original_apk_local_file_path")
 	let parser = try APKParser(apkURL: apkURL)
 	```
