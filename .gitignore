@@ -1,0 +1,11 @@
+.DS_Store
+/.build
+.swiftpm
+.build
+Packages
+xcuserdata
+*.xcodeproj
+DerivedData/
+*.jks
+*.apk
+output
