@@ -14,6 +14,20 @@ public enum APKSigner {
         }
         
         
+        // Algin(必要步驟，否則會無法安裝 APK)
+        let alignedURL = workingDirectory.appendingPathComponent("aligned.apk")
+        try Command.run(
+            "zipalign",
+            arguments: [
+                "-v",
+                "-p", "4",
+                fromApkURL.path,
+                alignedURL.path,
+            ],
+            environment: androidBuildToolEnvironmentVariable()
+        )
+        
+        
         // Signature
         let signedURL = workingDirectory.appendingPathComponent("signed.apk")
         let password = String.randomPassword()
@@ -27,24 +41,10 @@ public enum APKSigner {
                 "--ks-pass", "pass:\(signatureKey.storePassword)",
                 "--key-pass", "pass:\(signatureKey.password)",
                 "--out", signedURL.path,
-                fromApkURL.path,
+                alignedURL.path,
             ],
             environment: androidBuildToolEnvironmentVariable(),
             logEnable: true
-        )
-        
-        
-        // Algin(必要步驟，否則會無法安裝 APK)
-        let alignedURL = workingDirectory.appendingPathComponent("aligned.apk")
-        try Command.run(
-            "zipalign",
-            arguments: [
-                "-v",
-                "-p", "4",
-                signedURL.path,
-                alignedURL.path,
-            ],
-            environment: androidBuildToolEnvironmentVariable()
         )
         
         
@@ -57,7 +57,7 @@ public enum APKSigner {
             // 自動刪除已存在的檔案
             try FileManager.default.removeItem(at: toApkURL)
         }
-        try FileManager.default.moveItem(at: alignedURL, to: toApkURL)
+        try FileManager.default.moveItem(at: signedURL, to: toApkURL)
         
         
         // 清除暫存檔
