@@ -12,11 +12,6 @@ let newApkURL = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
     .appendingPathComponent("apks")
     .appendingPathComponent("new.apk")
 
-// 生成APK檔案位置
-let newSignedApkURL = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-    .appendingPathComponent("apks")
-    .appendingPathComponent("new-signed.apk")
-
 // 方形圖標檔案位置
 let iconURL = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
     .appendingPathComponent("Resources")
@@ -59,8 +54,8 @@ do {
     print("APKParser build new apk successfully! ✅ => \(newApkURL)")
     
     // APK 簽名
-    try APKSigner.signature(from: newApkURL, to: newSignedApkURL)
-    print("APKParser signature apk successfully! ✅ => \(newSignedApkURL)")
+    try APKSigner.signature(from: newApkURL, to: newApkURL)
+    print("APKParser signature apk successfully! ✅ => \(newApkURL)")
 }
 catch {
     print("❌❌ \(error.localizedDescription)")
