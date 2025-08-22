@@ -15,10 +15,17 @@ let package = Package(
                 "APKParser"
             ]
         ),
+        .library(
+            name: "APKSigner",
+            targets: [
+                "APKSigner"
+            ]
+        ),
     ],
     dependencies: [
         .package(url: "https://github.com/coollazy/Image.git", .upToNextMinor(from: "1.1.0")),
         .package(url: "https://github.com/jpsim/Yams.git", .upToNextMinor(from: "5.1.2")),
+        .package(url: "https://github.com/coollazy/APKSignKey.git", from: "1.0.0"),
     ],
     targets: [
         .target(
@@ -26,6 +33,15 @@ let package = Package(
             dependencies: [
                 .product(name: "Image", package: "Image"),
                 .product(name: "Yams", package: "Yams"),
+                .target(name: "Command"),
+            ],
+            resources: [
+            ]
+        ),
+        .target(
+            name: "APKSigner",
+            dependencies: [
+                .product(name: "APKSignKey", package: "APKSignKey"),
                 .target(name: "Command"),
             ],
             resources: [

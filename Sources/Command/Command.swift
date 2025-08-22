@@ -2,7 +2,7 @@ import Foundation
 
 public struct Command {
     @discardableResult
-    public static func run(_ command: String, arguments: [String], timeout: DispatchTime = .now() + 20, logEnable: Bool = false) throws -> String {
+    public static func run(_ command: String, arguments: [String], timeout: DispatchTime = .now() + 20, environment customEnv: [String: String]? = nil, logEnable: Bool = false) throws -> String {
         let semaphore = DispatchSemaphore(value: 0)
         var result: Result<String, Error>?
         
@@ -21,6 +21,11 @@ public struct Command {
         // 其他系統的預設設定
         environment["PATH"] = "/usr/local/bin:/usr/bin:/bin:" + currentPath
 #endif
+        if let customEnv {
+            for (key, value) in customEnv {
+                environment[key] = value
+            }
+        }
         process.environment = environment
         
         

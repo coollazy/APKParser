@@ -58,17 +58,19 @@ Android APK 反組譯及重新打包
 - 安裝 Android SDK Command Line Tools 
 
 	```bash
-	# 方法 1：透過 brew cask
+	# 透過 brew cask
 	brew install --cask android-commandlinetools
+	
+	# 安裝 build tools
+	sdkmanager "build-tools;34.0.0"
 	
 	# 設定環境變數
 	echo 'export ANDROID_HOME=/opt/homebrew/share/android-commandlinetools' >> ~/.zshrc
 	echo 'export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"' >> ~/.zshrc
 	echo 'export PATH="$ANDROID_HOME/build-tools/34.0.0:$PATH"' >> ~/.zshrc
-	source ~/.zshrc
+	echo 'export PATH="$ANDROID_HOME/build-tools/34.0.0:$PATH"' >> ~/.zshrc
 	
-	# 安裝 build tools
-	sdkmanager "build-tools;34.0.0"
+	source ~/.zshrc
 	```
 	
 - 或是直接安裝 [Android Studio](https://developer.android.com/studio)，並啟動 Android Studio 完成安裝 Android SDK
@@ -130,6 +132,14 @@ Android APK 反組譯及重新打包
 	> 產生出來的 APK 若有修改內容，無法直接安裝到手機上
 	>
 	> 需要額外簽名才能安裝
+
+### APKSigner
+
+- 簽名
+
+	```swift
+    try APKSigner.signature(from: apkURL, to: signedApkURL)
+	```
 	
 ## 參考指令
 
@@ -149,16 +159,17 @@ Android APK 反組譯及重新打包
 
 ***Signature APK***
 
-- Align apk
-
-	```sh
-	apktool b /path/to/decoded/folder -o /path/to/new-apk
-	```
-
 - Signature apk
 	
 	```sh
-	apktool b /path/to/decoded/folder -o /path/to/new-apk
+	apksigner sign --ks my-release-key.jks --ks-key-alias alias_name --ks-pass pass:密碼 --key-pass pass:密碼 --out signed.apk input.apk.apk
+
+	```
+
+- Align apk
+
+	```sh
+	zipalign -v -p 4 input.apk aligned.apk
 	```
 
 
