@@ -7,9 +7,9 @@ extension APKParser {
             return self
         }
         do {
-            try ManifestBuilder(androidManifestURL)
+            try StringsBuilder(stringsURL)
                 .replace(displayName: displayName)
-                .build(to: androidManifestURL)
+                .build(to: stringsURL)
         }
         catch {
             debugPrint("[APKParser Replace Display Name ERROR] \(error.localizedDescription)")

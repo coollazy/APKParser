@@ -2,6 +2,15 @@
   "object": {
     "pins": [
       {
+        "package": "APKSignKey",
+        "repositoryURL": "https://github.com/coollazy/APKSignKey.git",
+        "state": {
+          "branch": null,
+          "revision": "30554f701c3ed0d81b8451504aa8a10076c7293e",
+          "version": "1.0.0"
+        }
+      },
+      {
         "package": "Image",
         "repositoryURL": "https://github.com/coollazy/Image.git",
         "state": {
