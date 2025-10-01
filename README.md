@@ -159,17 +159,17 @@ Android APK 反組譯及重新打包
 
 ***Signature APK***
 
+- Align apk
+
+	```sh
+	zipalign -v -p 4 input.apk aligned.apk
+	```
+
 - Signature apk
 	
 	```sh
 	apksigner sign --ks my-release-key.jks --ks-key-alias alias_name --ks-pass pass:密碼 --key-pass pass:密碼 --out signed.apk input.apk.apk
 
-	```
-
-- Align apk
-
-	```sh
-	zipalign -v -p 4 input.apk aligned.apk
 	```
 
 
