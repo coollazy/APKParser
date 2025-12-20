@@ -22,6 +22,7 @@ let package = Package(
             name: "App",
             dependencies: [
                 .product(name: "APKParser", package: "APKParser"),
+                .product(name: "APKSigner", package: "APKParser"),
             ]
         ),
     ]
