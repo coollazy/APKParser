@@ -28,17 +28,20 @@ This library relies on external command-line tools. Please ensure they are insta
 Using [Homebrew](https://brew.sh/) is the easiest way to install dependencies on macOS.
 
 1.  **Java (OpenJDK)**
+
     ```bash
     brew install openjdk
     # Follow the on-screen instructions to symlink or set JAVA_HOME
     ```
 
 2.  **apktool**
+    
     ```bash
     brew install apktool
     ```
 
 3.  **Android SDK & Build-Tools**
+    
     ```bash
     brew install --cask android-commandlinetools
     
@@ -51,6 +54,7 @@ Using [Homebrew](https://brew.sh/) is the easiest way to install dependencies on
     ```
 
 4.  **ImageMagick** (Required for Icon resizing)
+    
     ```bash
     brew install imagemagick
     ```
@@ -60,12 +64,14 @@ Using [Homebrew](https://brew.sh/) is the easiest way to install dependencies on
 On Linux, some tools need to be installed manually.
 
 1.  **System Dependencies**
+    
     ```bash
     sudo apt-get update
     sudo apt-get install -y openjdk-17-jdk imagemagick wget unzip
     ```
 
 2.  **apktool**
+    
     ```bash
     # Download wrapper script and jar
     wget https://raw.githubusercontent.com/iBotPeaches/Apktool/master/scripts/linux/apktool
@@ -78,6 +84,7 @@ On Linux, some tools need to be installed manually.
     ```
 
 3.  **Android SDK Command Line Tools**
+    
     ```bash
     # Create directory for SDK
     export ANDROID_HOME=$HOME/android-sdk
@@ -108,7 +115,7 @@ Add the dependency to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/coollazy/APKParser.git", from: "1.0.0")
+    .package(url: "https://github.com/coollazy/APKParser.git", from: "1.1.0")
 ]
 ```
 
