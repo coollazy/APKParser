@@ -25,52 +25,82 @@
 
 此函式庫依賴外部命令行工具。請確保您的系統路徑中已安裝並可存取這些工具。
 
-### 1. Java Runtime Environment (JRE)
+### macOS
 
-`apktool` 需要 Java 環境。
+使用 [Homebrew](https://brew.sh/) 是在 macOS 上安裝依賴最簡單的方式。
 
-```bash
-# 透過 Homebrew 安裝 OpenJDK
-brew install openjdk
+1.  **Java (OpenJDK)**
+    ```bash
+    brew install openjdk
+    # 請依照螢幕上的指示設定 JAVA_HOME
+    ```
 
-# 設定環境變數 (以 zsh 為例)
-echo 'export JAVA_HOME=/opt/homebrew/opt/openjdk' >> ~/.zshrc
-echo 'export PATH="$JAVA_HOME/bin:$PATH"' >> ~/.zshrc
-source ~/.zshrc
+2.  **apktool**
+    ```bash
+    brew install apktool
+    ```
 
-# 驗證安裝
-java --version
-```
+3.  **Android SDK & Build-Tools**
+    ```bash
+    brew install --cask android-commandlinetools
+    
+    # 安裝特定版本的 build-tools (例如 34.0.0)
+    sdkmanager "build-tools;34.0.0"
+    
+    # 將其加入 PATH (在 ~/.zshrc 或 ~/.bash_profile)
+    export ANDROID_HOME="/usr/local/share/android-commandlinetools"
+    export PATH="$ANDROID_HOME/build-tools/34.0.0:$PATH"
+    ```
 
-### 2. apktool
+4.  **ImageMagick** (調整圖標大小所需)
+    ```bash
+    brew install imagemagick
+    ```
 
-用於反組譯和打包 APK。
+### Linux (Ubuntu/Debian)
 
-```bash
-# 透過 Homebrew 安裝 apktool
-brew install apktool
+在 Linux 上，部分工具需要手動安裝。
 
-# 驗證安裝
-apktool --version
-```
+1.  **系統依賴**
+    ```bash
+    sudo apt-get update
+    sudo apt-get install -y openjdk-17-jdk imagemagick wget unzip
+    ```
 
-### 3. Android SDK Build-Tools
+2.  **apktool**
+    ```bash
+    # 下載啟動腳本與 jar 檔
+    wget https://raw.githubusercontent.com/iBotPeaches/Apktool/master/scripts/linux/apktool
+    wget https://bitbucket.org/iBotPeaches/apktool/downloads/apktool_2.9.3.jar -O apktool.jar
+    
+    # 安裝至 /usr/local/bin
+    chmod +x apktool apktool.jar
+    sudo mv apktool /usr/local/bin/
+    sudo mv apktool.jar /usr/local/bin/
+    ```
 
-`zipalign` 和 `apksigner` 需要此工具。
+3.  **Android SDK Command Line Tools**
+    ```bash
+    # 建立 SDK 目錄
+    export ANDROID_HOME=$HOME/android-sdk
+    mkdir -p $ANDROID_HOME/cmdline-tools
+    
+    # 下載並解壓縮
+    wget https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O cmdline-tools.zip
+    unzip cmdline-tools.zip -d $ANDROID_HOME/cmdline-tools
+    mv $ANDROID_HOME/cmdline-tools/cmdline-tools $ANDROID_HOME/cmdline-tools/latest
+    
+    # 安裝 Build-Tools
+    export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin
+    yes | sdkmanager "build-tools;34.0.0"
+    
+    # 將 Build-Tools 加入 PATH
+    export PATH=$PATH:$ANDROID_HOME/build-tools/34.0.0
+    ```
 
-```bash
-# 透過 Homebrew 安裝 Android Command Line Tools
-brew install --cask android-commandlinetools
+## Docker 支援
 
-# 安裝特定版本的 build-tools (例如 34.0.0)
-sdkmanager "build-tools;34.0.0"
-
-# 設定環境變數
-export ANDROID_HOME=/opt/homebrew/share/android-commandlinetools
-export PATH="$ANDROID_HOME/build-tools/34.0.0:$PATH"
-```
-
-或者，如果您已安裝 **Android Studio**，請確保 `$ANDROID_HOME/build-tools/<version>/` 位於您的 `PATH` 中。
+本函式庫支援在 Docker 容器 (Linux) 中運行。關於如何設置 Docker 環境及運行範例專案的詳細說明，請參考 **[範例專案文件](Example/README.md)**。
 
 ## 安裝
 

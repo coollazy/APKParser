@@ -23,52 +23,82 @@ A powerful Swift library for decompiling, modifying, and recompiling Android APK
 
 This library relies on external command-line tools. Please ensure they are installed and available in your system path.
 
-### 1. Java Runtime Environment (JRE)
+### macOS
 
-`apktool` requires Java.
+Using [Homebrew](https://brew.sh/) is the easiest way to install dependencies on macOS.
 
-```bash
-# Install OpenJDK via Homebrew
-brew install openjdk
+1.  **Java (OpenJDK)**
+    ```bash
+    brew install openjdk
+    # Follow the on-screen instructions to symlink or set JAVA_HOME
+    ```
 
-# Set environment variables (Example for zsh)
-echo 'export JAVA_HOME=/opt/homebrew/opt/openjdk' >> ~/.zshrc
-echo 'export PATH="$JAVA_HOME/bin:$PATH"' >> ~/.zshrc
-source ~/.zshrc
+2.  **apktool**
+    ```bash
+    brew install apktool
+    ```
 
-# Verify installation
-java --version
-```
+3.  **Android SDK & Build-Tools**
+    ```bash
+    brew install --cask android-commandlinetools
+    
+    # Install specific build-tools (e.g., 34.0.0)
+    sdkmanager "build-tools;34.0.0"
+    
+    # Add to PATH (in ~/.zshrc or ~/.bash_profile)
+    export ANDROID_HOME="/usr/local/share/android-commandlinetools"
+    export PATH="$ANDROID_HOME/build-tools/34.0.0:$PATH"
+    ```
 
-### 2. apktool
+4.  **ImageMagick** (Required for Icon resizing)
+    ```bash
+    brew install imagemagick
+    ```
 
-Required for decompiling and building APKs.
+### Linux (Ubuntu/Debian)
 
-```bash
-# Install apktool via Homebrew
-brew install apktool
+On Linux, some tools need to be installed manually.
 
-# Verify installation
-apktool --version
-```
+1.  **System Dependencies**
+    ```bash
+    sudo apt-get update
+    sudo apt-get install -y openjdk-17-jdk imagemagick wget unzip
+    ```
 
-### 3. Android SDK Build-Tools
+2.  **apktool**
+    ```bash
+    # Download wrapper script and jar
+    wget https://raw.githubusercontent.com/iBotPeaches/Apktool/master/scripts/linux/apktool
+    wget https://bitbucket.org/iBotPeaches/apktool/downloads/apktool_2.9.3.jar -O apktool.jar
+    
+    # Install to /usr/local/bin
+    chmod +x apktool apktool.jar
+    sudo mv apktool /usr/local/bin/
+    sudo mv apktool.jar /usr/local/bin/
+    ```
 
-Required for `zipalign` and `apksigner`.
+3.  **Android SDK Command Line Tools**
+    ```bash
+    # Create directory for SDK
+    export ANDROID_HOME=$HOME/android-sdk
+    mkdir -p $ANDROID_HOME/cmdline-tools
+    
+    # Download & Unzip
+    wget https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O cmdline-tools.zip
+    unzip cmdline-tools.zip -d $ANDROID_HOME/cmdline-tools
+    mv $ANDROID_HOME/cmdline-tools/cmdline-tools $ANDROID_HOME/cmdline-tools/latest
+    
+    # Install Build-Tools
+    export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin
+    yes | sdkmanager "build-tools;34.0.0"
+    
+    # Add Build-Tools to PATH
+    export PATH=$PATH:$ANDROID_HOME/build-tools/34.0.0
+    ```
 
-```bash
-# Install Android Command Line Tools via Homebrew
-brew install --cask android-commandlinetools
+## Docker Support
 
-# Install specific build-tools (e.g., 34.0.0)
-sdkmanager "build-tools;34.0.0"
-
-# Set environment variables
-export ANDROID_HOME=/opt/homebrew/share/android-commandlinetools
-export PATH="$ANDROID_HOME/build-tools/34.0.0:$PATH"
-```
-
-Alternatively, if you have **Android Studio** installed, ensure `$ANDROID_HOME/build-tools/<version>/` is in your `PATH`.
+This library supports running in Docker containers (Linux). For detailed instructions on how to set up the Docker environment and run the example project, please refer to the **[Example Project Documentation](Example/README.md)**.
 
 ## Installation
 
