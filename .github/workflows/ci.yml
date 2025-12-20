@@ -10,18 +10,6 @@ on:
       - master
       - develop
 
-name: CI
-
-on:
-  push:
-    branches:
-      - master
-      - develop
-  pull_request:
-    branches:
-      - master
-      - develop
-
 jobs:
   build:
     runs-on: ${{ matrix.os }}
