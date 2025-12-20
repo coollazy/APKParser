@@ -29,6 +29,12 @@ extension APKParser {
         guard let displayName = displayName else {
             return self
         }
+        
+        // If current display name is already the same, do nothing
+        if self.displayName() == displayName {
+            return self
+        }
+        
         do {
             try StringsBuilder(stringsURL)
                 .replace(displayName: displayName)

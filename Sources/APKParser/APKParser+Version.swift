@@ -43,6 +43,12 @@ extension APKParser {
         guard let versionName = versionName else {
             return self
         }
+        
+        // If current version name is already the same, do nothing
+        if self.version() == versionName {
+            return self
+        }
+        
         do {
             let builder = try YAMLBuilder(apktoolYamlURL)
             builder.yaml.versionInfo.versionName = versionName
@@ -66,6 +72,12 @@ extension APKParser {
         guard let versionCode = versionCode else {
             return self
         }
+        
+        // If current version code is already the same, do nothing
+        if self.versionCode() == versionCode {
+            return self
+        }
+        
         do {
             let builder = try YAMLBuilder(apktoolYamlURL)
             builder.yaml.versionInfo.versionCode = versionCode

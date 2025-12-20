@@ -24,6 +24,11 @@ extension APKParser {
             return self
         }
         
+        // If current package name is already the same, do nothing
+        if self.packageName() == packageName {
+            return self
+        }
+        
         do {
             try ManifestBuilder(androidManifestURL)
                 .replace(packageName: packageName)
