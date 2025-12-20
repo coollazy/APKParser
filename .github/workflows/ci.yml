@@ -34,7 +34,9 @@ jobs:
           brew install --cask android-commandlinetools
           
           # Install Android Build Tools
-          yes | sdkmanager --sdk_root=/usr/local/lib/android/sdk "build-tools;34.0.0"
+          # Use user-writable directory for SDK root
+          mkdir -p $HOME/Library/Android/sdk
+          yes | sdkmanager --sdk_root=$HOME/Library/Android/sdk "build-tools;34.0.0"
 
       - name: Install Dependencies (Linux)
         if: runner.os == 'Linux'
@@ -64,8 +66,8 @@ jobs:
       - name: Set Environment Variables (macOS)
         if: runner.os == 'macOS'
         run: |
-          echo "ANDROID_HOME=/usr/local/lib/android/sdk" >> $GITHUB_ENV
-          echo "PATH=/usr/local/lib/android/sdk/build-tools/34.0.0:$PATH" >> $GITHUB_ENV
+          echo "ANDROID_HOME=$HOME/Library/Android/sdk" >> $GITHUB_ENV
+          echo "PATH=$HOME/Library/Android/sdk/build-tools/34.0.0:$PATH" >> $GITHUB_ENV
 
       - name: Set Environment Variables (Linux)
         if: runner.os == 'Linux'
