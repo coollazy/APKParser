@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(FoundationXML)
+import FoundationXML
+#endif
 
 public class ManifestBuilder: XMLBuilder {
     var applications: [XMLElement] {

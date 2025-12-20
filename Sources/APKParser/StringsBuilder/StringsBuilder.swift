@@ -1,3 +1,8 @@
+import Foundation
+#if canImport(FoundationXML)
+import FoundationXML
+#endif
+
 public class StringsBuilder: XMLBuilder {
     func replace(name: String?, value: String?) -> Self {
         guard let name = name else {
