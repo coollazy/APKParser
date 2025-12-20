@@ -1,21 +1,37 @@
-# 使用 Swift 官方映像檔作為基底
-FROM swift:5.9-jammy
+# ================================
+# Build image
+# ================================
+FROM swift:5.9-jammy AS build
 
-# 安裝系統依賴
-# openjdk-17-jdk: 用於 apktool
+WORKDIR /APKParser
+
+# 1. 複製整個專案上下文
+COPY . .
+
+# 2. 切換到 Example 目錄進行構建
+WORKDIR /APKParser/Example
+
+# 3. 解析依賴並構建
+# 目錄名稱 /APKParser 現在匹配 Package 名稱，解決 SPM 解析問題
+RUN swift build -c release --static-swift-stdlib
+
+# ================================
+# Run image
+# ================================
+FROM ubuntu:jammy
+
+# 安裝 runtime 依賴
+# openjdk-17-jre: 用於 apktool (runtime 只需要 JRE)
 # imagemagick: 用於處理圖片
 # wget, unzip: 用於下載和解壓工具
 RUN apt-get update && apt-get install -y \
-    openjdk-17-jdk \
+    openjdk-17-jre \
     imagemagick \
     wget \
     unzip \
     && rm -rf /var/lib/apt/lists/*
 
 # 安裝 apktool
-# 1. 下載啟動腳本
-# 2. 下載 jar 檔
-# 3. 設定權限並移動到 bin 目錄
 RUN wget https://raw.githubusercontent.com/iBotPeaches/Apktool/master/scripts/linux/apktool -O apktool && \
     wget https://bitbucket.org/iBotPeaches/apktool/downloads/apktool_2.9.3.jar -O apktool.jar && \
     chmod +x apktool && \
@@ -40,18 +56,12 @@ RUN yes | sdkmanager "build-tools;34.0.0"
 # 將 Build-Tools 加入 PATH
 ENV PATH ${PATH}:${ANDROID_HOME}/build-tools/34.0.0
 
-# 設定工作目錄
 WORKDIR /app
 
-# 複製整個專案到容器中
-COPY . .
+# 4. 從 build 階段複製編譯好的執行檔
+COPY --from=build /APKParser/Example/.build/release/App ./
+# 複製 Resources
+COPY --from=build /APKParser/Example/Resources ./Resources
 
-# 切換到 Example 目錄
-WORKDIR /app/Example
+CMD ["./App"]
 
-# 建置並執行範例程式
-# 這將會觸發 Package.resolved 的解析，編譯依賴，最後執行 main.swift
-RUN swift build -c release
-
-# 設定容器啟動時的預設指令
-CMD ["swift", "run", "-c", "release"]
