@@ -30,17 +30,20 @@
 使用 [Homebrew](https://brew.sh/) 是在 macOS 上安裝依賴最簡單的方式。
 
 1.  **Java (OpenJDK)**
+
     ```bash
     brew install openjdk
     # 請依照螢幕上的指示設定 JAVA_HOME
     ```
 
 2.  **apktool**
+    
     ```bash
     brew install apktool
     ```
 
 3.  **Android SDK & Build-Tools**
+    
     ```bash
     brew install --cask android-commandlinetools
     
@@ -53,6 +56,7 @@
     ```
 
 4.  **ImageMagick** (調整圖標大小所需)
+    
     ```bash
     brew install imagemagick
     ```
@@ -62,12 +66,14 @@
 在 Linux 上，部分工具需要手動安裝。
 
 1.  **系統依賴**
+    
     ```bash
     sudo apt-get update
     sudo apt-get install -y openjdk-17-jdk imagemagick wget unzip
     ```
 
 2.  **apktool**
+    
     ```bash
     # 下載啟動腳本與 jar 檔
     wget https://raw.githubusercontent.com/iBotPeaches/Apktool/master/scripts/linux/apktool
@@ -80,6 +86,7 @@
     ```
 
 3.  **Android SDK Command Line Tools**
+    
     ```bash
     # 建立 SDK 目錄
     export ANDROID_HOME=$HOME/android-sdk
@@ -135,17 +142,11 @@ if let version = parser.versionWithCode() {
 // 3. 修改 APK 內容
 // 注意: 替換方法中的錯誤目前會記錄到控制台 (console)，不會中斷執行。
 do {
-    // 替換 Package Name
-    parser.replace(packageName: "com.example.newpackage")
-    
-    // 替換顯示名稱
-    parser.replace(displayName: "My New App Name")
-    
-    // 替換圖標
-    try parser.replace(iconURL: URL(fileURLWithPath: "/path/to/icon.png"))
-    
-    // 替換圓形圖標
-    try parser.replace(roundIconURL: URL(fileURLWithPath: "/path/to/round_icon.png"))
+    try parser
+        .replace(packageName: "com.example.newpackage")
+        .replace(displayName: "My New App Name")
+        .replace(iconURL: URL(fileURLWithPath: "/path/to/icon.png"))
+        .replace(roundIconURL: URL(fileURLWithPath: "/path/to/round_icon.png"))
 } catch {
     print("修改 APK 時發生錯誤: \(error)")
 }

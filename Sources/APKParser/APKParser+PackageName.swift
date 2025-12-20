@@ -1,6 +1,13 @@
 import Foundation
 
 extension APKParser {
+    /// Retrieves the package name of the application from `AndroidManifest.xml`.
+    ///
+    /// - Returns: The package name as a `String` if found, otherwise `nil`.
+    public func packageName() -> String? {
+        return (try? ManifestBuilder(androidManifestURL).xml.rootElement()?.attribute(forName: "package")?.stringValue)
+    }
+    
     /// Replaces the package name of the application.
     ///
     /// This method performs two operations:

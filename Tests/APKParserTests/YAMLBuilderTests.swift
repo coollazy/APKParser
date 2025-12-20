@@ -52,6 +52,32 @@ final class YAMLBuilderTests: XCTestCase {
         XCTAssertEqual(newBuilder.yaml.versionInfo.versionName, "1.0.1")
     }
     
+    func testModifyVersionIndependently() throws {
+        let yamlContent = """
+        packageInfo:
+          renameManifestPackage: null
+        versionInfo:
+          versionCode: '10'
+          versionName: 1.0.0
+        """
+        try createYAMLFile(content: yamlContent)
+        
+        // Mimic replace(versionName:)
+        let builder1 = try YAMLBuilder(tempFileURL)
+        builder1.yaml.versionInfo.versionName = "2.0.0"
+        try builder1.build(to: tempFileURL)
+        
+        // Mimic replace(versionCode:)
+        let builder2 = try YAMLBuilder(tempFileURL)
+        builder2.yaml.versionInfo.versionCode = "20"
+        try builder2.build(to: tempFileURL)
+        
+        // Verify
+        let finalBuilder = try YAMLBuilder(tempFileURL)
+        XCTAssertEqual(finalBuilder.yaml.versionInfo.versionName, "2.0.0")
+        XCTAssertEqual(finalBuilder.yaml.versionInfo.versionCode, "20")
+    }
+    
     func testParseInvalidYAML() {
         let yamlContent = "invalid: yaml: content: ["
         try? createYAMLFile(content: yamlContent)

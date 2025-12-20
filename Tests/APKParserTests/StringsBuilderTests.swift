@@ -88,7 +88,7 @@ final class StringsBuilderTests: XCTestCase {
         _ = builder.replace(name: "app_name", value: nil)
         
         let nodes = try builder.xml.nodes(forXPath: "//string[@name='app_name']")
-        // If stringValue is set to nil, it typically removes the text content, resulting in empty string
+        // If stringValue is set to nil, it typically removes the text content
         XCTAssertEqual(nodes.first?.stringValue, "")
     }
     
@@ -108,5 +108,23 @@ final class StringsBuilderTests: XCTestCase {
         
         let outputContent = try String(contentsOf: outputURL)
         XCTAssertTrue(outputContent.contains("Built Name"))
+    }
+    
+    func testDisplayNameGetter() throws {
+        let displayName = "Test App Name"
+        let xmlContent = """
+        <resources>
+            <string name="app_name">\(displayName)</string>
+            <string name="other_string">Other</string>
+        </resources>
+        """
+        try createXMLFile(content: xmlContent)
+        
+        let builder = try StringsBuilder(tempFileURL)
+        let retrievedDisplayName = builder.xml.rootElement()?.elements(forName: "string").first {
+            $0.attribute(forName: "name")?.stringValue == "app_name"
+        }?.stringValue
+        
+        XCTAssertEqual(retrievedDisplayName, displayName)
     }
 }

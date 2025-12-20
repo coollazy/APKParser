@@ -133,4 +133,18 @@ final class ManifestBuilderTests: XCTestCase {
         
         XCTAssertEqual(builder.xml.rootElement()?.attribute(forName: "package")?.stringValue, "com.old.app")
     }
+    
+    func testPackageNameGetter() throws {
+        let packageName = "com.example.testpackage"
+        let xmlContent = """
+        <manifest package="\(packageName)" xmlns:android="http://schemas.android.com/apk/res/android">
+        </manifest>
+        """
+        try createXMLFile(content: xmlContent)
+        
+        let builder = try ManifestBuilder(tempFileURL)
+        let retrievedPackageName = builder.xml.rootElement()?.attribute(forName: "package")?.stringValue
+        
+        XCTAssertEqual(retrievedPackageName, packageName)
+    }
 }

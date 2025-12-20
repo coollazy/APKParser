@@ -133,17 +133,11 @@ if let version = parser.versionWithCode() {
 // 3. Modify APK Content
 // Note: Errors in replacement methods are currently logged to console and do not halt execution.
 do {
-    // Replace Package Name
-    parser.replace(packageName: "com.example.newpackage")
-    
-    // Replace Display Name
-    parser.replace(displayName: "My New App Name")
-    
-    // Replace Icon
-    try parser.replace(iconURL: URL(fileURLWithPath: "/path/to/icon.png"))
-    
-    // Replace Round Icon
-    try parser.replace(roundIconURL: URL(fileURLWithPath: "/path/to/round_icon.png"))
+    try parser
+        .replace(packageName: "com.example.newpackage")
+        .replace(displayName: "My New App Name")
+        .replace(iconURL: URL(fileURLWithPath: "/path/to/icon.png"))
+        .replace(roundIconURL: URL(fileURLWithPath: "/path/to/round_icon.png"))
 } catch {
     print("Error modifying APK: \(error)")
 }

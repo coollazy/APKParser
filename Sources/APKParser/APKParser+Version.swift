@@ -29,4 +29,50 @@ extension APKParser {
         let builder = try YAMLBuilder(apktoolYamlURL)
         return "\(builder.yaml.versionInfo.versionName).\(builder.yaml.versionInfo.versionCode)"
     }
+    
+    /// Replaces the version name of the APK.
+    ///
+    /// This method modifies the `versionName` in the `apktool.yml` file.
+    ///
+    /// - Note: If the replacement fails, the error is logged to the console, and the operation is silently ignored.
+    ///
+    /// - Parameter versionName: The new version name (e.g., "1.2.0"). If `nil`, no changes are made.
+    /// - Returns: The `APKParser` instance for method chaining.
+    @discardableResult
+    public func replace(versionName: String?) -> Self {
+        guard let versionName = versionName else {
+            return self
+        }
+        do {
+            let builder = try YAMLBuilder(apktoolYamlURL)
+            builder.yaml.versionInfo.versionName = versionName
+            try builder.build(to: apktoolYamlURL)
+        } catch {
+            debugPrint("[APKParser Replace VersionName ERROR] \(error.localizedDescription)")
+        }
+        return self
+    }
+    
+    /// Replaces the version code of the APK.
+    ///
+    /// This method modifies the `versionCode` in the `apktool.yml` file.
+    ///
+    /// - Note: If the replacement fails, the error is logged to the console, and the operation is silently ignored.
+    ///
+    /// - Parameter versionCode: The new version code (e.g., "102"). If `nil`, no changes are made.
+    /// - Returns: The `APKParser` instance for method chaining.
+    @discardableResult
+    public func replace(versionCode: String?) -> Self {
+        guard let versionCode = versionCode else {
+            return self
+        }
+        do {
+            let builder = try YAMLBuilder(apktoolYamlURL)
+            builder.yaml.versionInfo.versionCode = versionCode
+            try builder.build(to: apktoolYamlURL)
+        } catch {
+            debugPrint("[APKParser Replace VersionCode ERROR] \(error.localizedDescription)")
+        }
+        return self
+    }
 }
