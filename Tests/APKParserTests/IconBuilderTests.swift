@@ -1,7 +1,5 @@
 import XCTest
 @testable import APKParser
-import ImageIO
-import UniformTypeIdentifiers
 
 final class IconBuilderTests: XCTestCase {
     
@@ -19,36 +17,22 @@ final class IconBuilderTests: XCTestCase {
     }
     
     private func createPNG(size: CGSize, url: URL) -> Bool {
-        guard let destination = CGImageDestinationCreateWithURL(url as CFURL, UTType.png.identifier as CFString, 1, nil) else { return false }
-        
         let width = Int(size.width)
         let height = Int(size.height)
-        let bytesPerPixel = 4
-        let bytesPerRow = bytesPerPixel * width
-        let bitsPerComponent = 8
         
-        var data = [UInt8](repeating: 0, count: width * height * bytesPerPixel)
-        // Fill with some red color to make it valid content
-        for i in 0..<(width * height) {
-            data[i * 4] = 255     // R
-            data[i * 4 + 3] = 255 // A
+        // Use ImageMagick 'convert' which is installed in both macOS and Linux CI environments
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+        process.arguments = ["convert", "-size", "\(width)x\(height)", "xc:red", url.path]
+        
+        do {
+            try process.run()
+            process.waitUntilExit()
+            return process.terminationStatus == 0
+        } catch {
+            print("Failed to run convert: \(error)")
+            return false
         }
-        
-        guard let provider = CGDataProvider(data: Data(data) as CFData),
-              let cgImage = CGImage(width: width,
-                                    height: height,
-                                    bitsPerComponent: bitsPerComponent,
-                                    bitsPerPixel: bytesPerPixel * 8,
-                                    bytesPerRow: bytesPerRow,
-                                    space: CGColorSpaceCreateDeviceRGB(),
-                                    bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue),
-                                    provider: provider,
-                                    decode: nil,
-                                    shouldInterpolate: true,
-                                    intent: .defaultIntent) else { return false }
-        
-        CGImageDestinationAddImage(destination, cgImage, nil)
-        return CGImageDestinationFinalize(destination)
     }
     
     func testInitSuccess() throws {
