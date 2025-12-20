@@ -54,5 +54,9 @@ let package = Package(
             resources: [
             ]
         ),
+        .testTarget(
+            name: "APKParserTests",
+            dependencies: ["APKParser", "APKSigner", "Command"]
+        ),
     ]
 )

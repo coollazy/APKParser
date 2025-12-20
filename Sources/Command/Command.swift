@@ -110,3 +110,24 @@ public struct Command {
         }
     }
 }
+
+public protocol CommandRunner {
+    @discardableResult
+    func run(_ command: String, arguments: [String], environment: [String: String]?) throws -> String
+}
+
+public extension CommandRunner {
+    @discardableResult
+    func run(_ command: String, arguments: [String]) throws -> String {
+        return try run(command, arguments: arguments, environment: nil)
+    }
+}
+
+public struct ShellCommandRunner: CommandRunner {
+    public init() {}
+    
+    @discardableResult
+    public func run(_ command: String, arguments: [String], environment: [String: String]? = nil) throws -> String {
+        return try Command.run(command, arguments: arguments, environment: environment)
+    }
+}

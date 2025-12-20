@@ -2,9 +2,25 @@ import Foundation
 import APKSignKey
 import Command
 
+/// A utility for signing and verifying Android APKs.
+///
+/// `APKSigner` provides wrappers around the `zipalign` and `apksigner` command-line tools.
+/// It supports aligning APKs (zip-align), signing them with a keystore, and verifying existing signatures.
 public enum APKSigner {
-    /// 簽名(包含對齊)
-    public static func signature(from fromApkURL: URL, to toApkURL: URL, signKey: APKSignKey? = nil) throws {
+    
+    /// Signs an APK file.
+    ///
+    /// This process involves two steps:
+    /// 1.  **Alignment**: Runs `zipalign` on the input APK to optimize it.
+    /// 2.  **Signing**: Runs `apksigner` using the provided or generated key.
+    ///
+    /// - Parameters:
+    ///   - fromApkURL: The file URL of the input (unsigned or existing) APK.
+    ///   - toApkURL: The destination file URL for the signed and aligned APK.
+    ///   - signKey: The signing key configuration. If `nil`, a random key is generated.
+    ///   - commandRunner: The runner for executing shell commands. Defaults to `ShellCommandRunner`.
+    /// - Throws: An error if `zipalign` or `apksigner` commands fail, or if file operations fail.
+    public static func signature(from fromApkURL: URL, to toApkURL: URL, signKey: APKSignKey? = nil, commandRunner: CommandRunner = ShellCommandRunner()) throws {
         let workingDirectory: URL = FileManager.default.temporaryDirectory
             .appendingPathComponent("APKSigner")
             .appendingPathComponent(UUID().uuidString)
@@ -13,10 +29,20 @@ public enum APKSigner {
             try FileManager.default.createDirectory(at: workingDirectory, withIntermediateDirectories: true, attributes: nil)
         }
         
+        // 清除暫存檔
+        defer {
+            do {
+                try FileManager.default.removeItem(atPath: workingDirectory.path)
+            }
+            catch {
+                debugPrint("APKSigner clear temp directory error: \(error.localizedDescription)")
+            }
+        }
+        
         
         // Algin(必要步驟，否則會無法安裝 APK)
         let alignedURL = workingDirectory.appendingPathComponent("aligned.apk")
-        try Command.run(
+        try commandRunner.run(
             "zipalign",
             arguments: [
                 "-v",
@@ -32,7 +58,7 @@ public enum APKSigner {
         let signedURL = workingDirectory.appendingPathComponent("signed.apk")
         let password = String.randomPassword()
         let signatureKey = try signKey ?? APKSignKey.generateKey(name: UUID().uuidString, password: password, storePassword: password)
-        try Command.run(
+        try commandRunner.run(
             "apksigner",
             arguments: [
                 "sign",
@@ -43,8 +69,7 @@ public enum APKSigner {
                 "--out", signedURL.path,
                 alignedURL.path,
             ],
-            environment: androidBuildToolEnvironmentVariable(),
-            logEnable: true
+            environment: androidBuildToolEnvironmentVariable()
         )
         
         
@@ -58,22 +83,18 @@ public enum APKSigner {
             try FileManager.default.removeItem(at: toApkURL)
         }
         try FileManager.default.moveItem(at: signedURL, to: toApkURL)
-        
-        
-        // 清除暫存檔
-        defer {
-            do {
-                try FileManager.default.removeItem(atPath: workingDirectory.path)
-            }
-            catch {
-                debugPrint("APKSigner clear temp directory error: \(error.localizedDescription)")
-            }
-        }
     }
     
-    /// 驗證 APK 是否已經對齊
-    public static func verifyAlgin(from apkURL: URL) throws {
-        try Command.run(
+    /// Verifies if an APK is zip-aligned.
+    ///
+    /// Runs `zipalign -c` to check alignment.
+    ///
+    /// - Parameters:
+    ///   - apkURL: The file URL of the APK to verify.
+    ///   - commandRunner: The runner for executing shell commands. Defaults to `ShellCommandRunner`.
+    /// - Throws: An error if the verification command fails (indicating the APK is not aligned) or if the tool execution fails.
+    public static func verifyAlgin(from apkURL: URL, commandRunner: CommandRunner = ShellCommandRunner()) throws {
+        try commandRunner.run(
             "zipalign",
             arguments: [
                 "-c",
@@ -85,9 +106,16 @@ public enum APKSigner {
         )
     }
     
-    /// 驗證APK是否已經簽名
-    public static func verifySignature(from apkURL: URL) throws {
-        try Command.run(
+    /// Verifies the signature of an APK.
+    ///
+    /// Runs `apksigner verify` to check the signature validity.
+    ///
+    /// - Parameters:
+    ///   - apkURL: The file URL of the APK to verify.
+    ///   - commandRunner: The runner for executing shell commands. Defaults to `ShellCommandRunner`.
+    /// - Throws: An error if the verification command fails (indicating the APK signature is invalid) or if the tool execution fails.
+    public static func verifySignature(from apkURL: URL, commandRunner: CommandRunner = ShellCommandRunner()) throws {
+        try commandRunner.run(
             "apksigner",
             arguments: [
                 "verify",

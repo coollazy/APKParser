@@ -10,19 +10,94 @@ on:
       - master
       - develop
 
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+  pull_request:
+    branches:
+      - master
+      - develop
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-latest]
+        os: [macos-latest, ubuntu-latest]
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
+
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install Dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install apktool imagemagick
+          brew install --cask android-commandlinetools
+          
+          # Install Android Build Tools
+          yes | sdkmanager --sdk_root=/usr/local/lib/android/sdk "build-tools;34.0.0"
+
+      - name: Install Dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y imagemagick wget unzip
+          
+          # Install apktool
+          wget https://raw.githubusercontent.com/iBotPeaches/Apktool/master/scripts/linux/apktool -O apktool
+          wget https://bitbucket.org/iBotPeaches/apktool/downloads/apktool_2.9.3.jar -O apktool.jar
+          chmod +x apktool
+          chmod +x apktool.jar
+          sudo mv apktool /usr/local/bin/
+          sudo mv apktool.jar /usr/local/bin/
+          
+          # Install Android SDK Command Line Tools
+          mkdir -p android-sdk/cmdline-tools
+          wget https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O cmdline-tools.zip
+          unzip cmdline-tools.zip -d android-sdk/cmdline-tools
+          mv android-sdk/cmdline-tools/cmdline-tools android-sdk/cmdline-tools/latest
+          
+          # Install Android Build Tools
+          export ANDROID_HOME=$PWD/android-sdk
+          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
+          yes | sdkmanager "build-tools;34.0.0"
+
+      - name: Set Environment Variables (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          echo "ANDROID_HOME=/usr/local/lib/android/sdk" >> $GITHUB_ENV
+          echo "PATH=/usr/local/lib/android/sdk/build-tools/34.0.0:$PATH" >> $GITHUB_ENV
+
+      - name: Set Environment Variables (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          echo "ANDROID_HOME=$PWD/android-sdk" >> $GITHUB_ENV
+          echo "PATH=$PWD/android-sdk/build-tools/34.0.0:$PATH" >> $GITHUB_ENV
 
       - name: Resolve dependencies
         run: swift package resolve
 
       - name: Build
         run: swift build --configuration release
+        
+      - name: Run Tests
+        run: swift test
+
+      - name: Docker Build & Run Verification
+        if: runner.os == 'Linux'
+        run: |
+          echo "--- Starting Docker Build & Run Verification ---"
+          docker build -t apkparser-example:ci -f Example/Dockerfile .
+          docker run --rm apkparser-example:ci
+          echo "--- Docker Build & Run Verification Finished ---"

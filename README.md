@@ -5,171 +5,163 @@
 ![SPM](https://img.shields.io/badge/SPM-Supported-green)
 [![CI](https://github.com/coollazy/APKParser/actions/workflows/ci.yml/badge.svg)](https://github.com/coollazy/APKParser/actions/workflows/ci.yml)
 
-Android APK 反組譯及重新打包
+A powerful Swift library for decompiling, modifying, and recompiling Android APK files. This library acts as a wrapper around standard Android tools (`apktool`, `zipalign`, `apksigner`), providing a clean and fluent Swift API for automating APK manipulation tasks.
 
-## Enviorment
+## Features
 
-### Mac
+- **Decompile APKs**: Extract resources and manifests using `apktool`.
+- **Modify Resources**:
+  - Replace Application Display Name.
+  - Replace Application Package Name.
+  - Replace App Icons (Launcher and Round Icons).
+  - Modify String Resources.
+- **Read APK Info**: Retrieve Version Code and Version Name.
+- **Recompile APKs**: Build a new APK from modified sources.
+- **Sign & Align**: Support for `zipalign` and `apksigner` to produce installable APKs.
 
-***JRE***
+## Prerequisites
 
-- 安裝 JRE
+This library relies on external command-line tools. Please ensure they are installed and available in your system path.
 
-	```bash
-	# 安裝 OpenJDK
-	brew install openjdk
-	
-	# 設定環境變數
-	echo 'export JAVA_HOME=/opt/homebrew/opt/openjdk' >> ~/.zshrc
-	echo 'export PATH="$JAVA_HOME/bin:$PATH"' >> ~/.zshrc
-	source ~/.zshrc
-	```
+### 1. Java Runtime Environment (JRE)
 
-- 驗證安裝
-	
-	```
-	java --version
-	```
-	> java 22.0.1 2024-04-16
-	>
-	> Java(TM) SE Runtime Environment (build 22.0.1+8-16)
-	>
-	> Java HotSpot(TM) 64-Bit Server VM (build 22.0.1+8-16, mixed mode, sharing)
+`apktool` requires Java.
 
-- JDK 安裝失敗，[請參考這裡](https://blog.gslin.org/archives/2022/12/28/11009/mac-%E4%B8%8A%E7%94%A8-homebrew-%E5%AE%89%E8%A3%9D-java-%E7%9A%84%E6%96%B9%E5%BC%8F/)
+```bash
+# Install OpenJDK via Homebrew
+brew install openjdk
 
-***apktool***
+# Set environment variables (Example for zsh)
+echo 'export JAVA_HOME=/opt/homebrew/opt/openjdk' >> ~/.zshrc
+echo 'export PATH="$JAVA_HOME/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
 
-- 安裝 [apktool](https://apktool.org/docs/install)
+# Verify installation
+java --version
+```
 
-	```
-	brew install apktool
-	```
+### 2. apktool
 
-- 驗證安裝
+Required for decompiling and building APKs.
 
-	```
-	apktool --version
-	```
-	> 2.9.3
+```bash
+# Install apktool via Homebrew
+brew install apktool
 
-***Android SDK Command Line Tools 或 Android Studio***
+# Verify installation
+apktool --version
+```
 
-- 安裝 Android SDK Command Line Tools 
+### 3. Android SDK Build-Tools
 
-	```bash
-	# 透過 brew cask
-	brew install --cask android-commandlinetools
-	
-	# 安裝 build tools
-	sdkmanager "build-tools;34.0.0"
-	
-	# 設定環境變數
-	echo 'export ANDROID_HOME=/opt/homebrew/share/android-commandlinetools' >> ~/.zshrc
-	echo 'export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"' >> ~/.zshrc
-	echo 'export PATH="$ANDROID_HOME/build-tools/34.0.0:$PATH"' >> ~/.zshrc
-	echo 'export PATH="$ANDROID_HOME/build-tools/34.0.0:$PATH"' >> ~/.zshrc
-	
-	source ~/.zshrc
-	```
-	
-- 或是直接安裝 [Android Studio](https://developer.android.com/studio)，並啟動 Android Studio 完成安裝 Android SDK
-- 驗證安裝
+Required for `zipalign` and `apksigner`.
 
-	```bash
-	zipalign
-	```
-	> 
-	
-	```bash
-	apksigner --help
-	```
-	>
+```bash
+# Install Android Command Line Tools via Homebrew
+brew install --cask android-commandlinetools
+
+# Install specific build-tools (e.g., 34.0.0)
+sdkmanager "build-tools;34.0.0"
+
+# Set environment variables
+export ANDROID_HOME=/opt/homebrew/share/android-commandlinetools
+export PATH="$ANDROID_HOME/build-tools/34.0.0:$PATH"
+```
+
+Alternatively, if you have **Android Studio** installed, ensure `$ANDROID_HOME/build-tools/<version>/` is in your `PATH`.
+
+## Installation
+
+### Swift Package Manager
+
+Add the dependency to your `Package.swift`:
+
+```swift
+dependencies: [
+    .package(url: "https://github.com/coollazy/APKParser.git", from: "1.0.0")
+]
+```
 
 ## Usage
 
-***Swift Package Manager***
-
-- Package.swift 的 dependencies 內添加
-	
-	```swift
-	.package(name: "APKParser", url: "https://github.com/coollazy/APKParser.git", from: "1.0.0"),
-	```
-
 ### APKParser
 
-- 反組譯 APK
+The `APKParser` class is the main entry point for modifying APKs.
 
-	```swift
-	// 初始化 Parser
-	let apkURL: URL = URL(fileURLWithPath: "your_original_apk_local_file_path")
-	let parser = try APKParser(apkURL: apkURL)
-	```
-	
-- 替換
+```swift
+import APKParser
 
-	```swift
-	// 替換 PackageName
-	parser.replace(packageName: "com.coollazy.apkparser.example")
-	
-	// 替換 App 顯示名稱
-	parser.replace(displayName: "APKParser Example")
-	
-	// 替換圖標
-	try parser.replace(iconURL: URL(fileURLWithPath: "icon_file_path"))
-	
-	// 替換圓形圖標
-	try parser.replace(roundIconURL: URL(fileURLWithPath: "round_icon_file_path"))
-	```
+// 1. Initialize Parser with the path to your APK
+let apkURL = URL(fileURLWithPath: "/path/to/your.apk")
+let parser = try APKParser(apkURL: apkURL)
 
-- 重新打包
+// 2. Read Information
+if let version = parser.versionWithCode() {
+    print("Current Version: \(version)") // e.g., "1.0.0.100"
+}
 
-	```swift
-	// 產生新 APK
-	let newApkURL: URL = URL(fileURLWithPath: "new_apk_file_path")
-	try parser.build(toPath: newApkURL)
-	```
-	> 產生出來的 APK 若有修改內容，無法直接安裝到手機上
-	>
-	> 需要額外簽名才能安裝
+// 3. Modify APK Content
+// Note: Errors in replacement methods are currently logged to console and do not halt execution.
+do {
+    // Replace Package Name
+    parser.replace(packageName: "com.example.newpackage")
+    
+    // Replace Display Name
+    parser.replace(displayName: "My New App Name")
+    
+    // Replace Icon
+    try parser.replace(iconURL: URL(fileURLWithPath: "/path/to/icon.png"))
+    
+    // Replace Round Icon
+    try parser.replace(roundIconURL: URL(fileURLWithPath: "/path/to/round_icon.png"))
+} catch {
+    print("Error modifying APK: \(error)")
+}
+
+// 4. Rebuild the APK
+let newApkURL = URL(fileURLWithPath: "/path/to/output.apk")
+try parser.build(toPath: newApkURL)
+
+print("APK Rebuilt at: \(newApkURL.path)")
+// Note: The rebuilt APK is unsigned and cannot be installed yet.
+```
 
 ### APKSigner
 
-- 簽名
+Use `APKSigner` to sign and align the APK so it can be installed on devices.
 
-	```swift
-    try APKSigner.signature(from: apkURL, to: signedApkURL)
-	```
-	
-## 參考指令
+```swift
+import APKSigner
 
-***Decode & Encode APK***
+let unsignedApkURL = URL(fileURLWithPath: "/path/to/output.apk")
+let signedApkURL = URL(fileURLWithPath: "/path/to/signed_output.apk")
 
-- Decode apk to folder with apktool
+do {
+    // Sign and Align the APK
+    // If signKey is nil, a self-signed key will be generated automatically.
+    try APKSigner.signature(from: unsignedApkURL, to: signedApkURL)
+    
+    print("Signed APK created at: \(signedApkURL.path)")
+    
+    // Verify Alignment
+    try APKSigner.verifyAlgin(from: signedApkURL)
+    
+    // Verify Signature
+    try APKSigner.verifySignature(from: signedApkURL)
+    
+} catch {
+    print("Signing failed: \(error)")
+}
+```
 
-	```sh
-	apktool d -f /path/from/APK -o /path/to/decoded/folder
-	```
+## Error Handling
 
-- Encode folder to apk with apktool
+- **APKParser Initialization**: Throws if the APK file is not found or `apktool` fails to decompile.
+- **Modifications**:
+  - `replace(iconURL:)` throws specific errors like `APKParserError.invalidIconFormat` or `APKParserError.invalidIconSize`.
+  - `replace(packageName:)` and `replace(displayName:)` currently catch errors internally and log them to the debug console.
+- **APKSigner**: Throws if external tools (`zipalign`, `apksigner`) fail or are not found in the environment.
 
-	```sh
-	apktool b /path/to/decoded/folder -o /path/to/new-apk
-	```
+## License
 
-***Signature APK***
-
-- Align apk
-
-	```sh
-	zipalign -v -p 4 input.apk aligned.apk
-	```
-
-- Signature apk
-	
-	```sh
-	apksigner sign --ks my-release-key.jks --ks-key-alias alias_name --ks-pass pass:密碼 --key-pass pass:密碼 --out signed.apk input.apk.apk
-
-	```
-
-
+[MIT License](LICENSE)
