@@ -24,17 +24,22 @@ public struct APKContext {
     /// The `res` directory containing application resources (drawables, layouts, values, etc.).
     public let resDirectory: URL
     
+    /// The `assets` directory containing application assets.
+    public let assetsDirectory: URL
+    
     internal init(
         manifestBuilder: ManifestBuilder,
         yamlBuilder: YAMLBuilder,
         stringsBuilder: StringsBuilder,
         appDirectory: URL,
-        resDirectory: URL
+        resDirectory: URL,
+        assetsDirectory: URL
     ) {
         self.manifestBuilder = manifestBuilder
         self.yamlBuilder = yamlBuilder
         self.stringsBuilder = stringsBuilder
         self.appDirectory = appDirectory
         self.resDirectory = resDirectory
+        self.assetsDirectory = assetsDirectory
     }
 }
