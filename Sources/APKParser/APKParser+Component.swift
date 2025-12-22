@@ -25,7 +25,8 @@ extension APKParser {
             yamlBuilder: yamlBuilder,
             stringsBuilder: stringsBuilder,
             appDirectory: appDirectory,
-            resDirectory: resDirectory
+            resDirectory: resDirectory,
+            assetsDirectory: assetsDirectory
         )
         
         // 3. Apply Component Logic
