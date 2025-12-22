@@ -29,6 +29,7 @@ RUN apt-get update && apt-get install -y \
     imagemagick \
     wget \
     unzip \
+    libc++-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # 安裝 apktool
@@ -53,8 +54,10 @@ ENV PATH ${PATH}:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platfo
 # 安裝 Android Build-Tools (包含 zipalign, apksigner)
 RUN yes | sdkmanager "build-tools;34.0.0"
 
+# 檢查 zipalign 的依賴 (用於診斷)
+RUN ldd ${ANDROID_HOME}/build-tools/34.0.0/zipalign || echo "ldd failed"
+
 # 將 Build-Tools 加入 PATH
-ENV PATH ${PATH}:${ANDROID_HOME}/build-tools/34.0.0
 
 WORKDIR /app
 
