@@ -1,7 +1,7 @@
 # ================================
 # Build image & Prepare SDK
 # ================================
-FROM swift:5.9-jammy AS build
+FROM swift:5.10-noble AS build
 
 # 安裝 SDK 管理工具所需的依賴 (僅在 build 階段使用)
 RUN apt-get update && apt-get install -y \
@@ -36,7 +36,7 @@ RUN swift build -c release --static-swift-stdlib
 # ================================
 # Run image
 # ================================
-FROM ubuntu:jammy
+FROM ubuntu:noble
 
 # 設定環境變數
 ENV ANDROID_HOME /opt/android-sdk
@@ -53,11 +53,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # 針對 ARM64 架構 (如 Apple Silicon) 啟用 Multi-Arch 支援以運行 x86 工具
 RUN if [ "$(dpkg --print-architecture)" = "arm64" ]; then \
     dpkg --add-architecture amd64 \
-    && sed -i 's/deb/deb [arch=arm64]/' /etc/apt/sources.list \
-    && echo "deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ jammy main restricted universe multiverse" >> /etc/apt/sources.list \
-    && echo "deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ jammy-updates main restricted universe multiverse" >> /etc/apt/sources.list \
-    && echo "deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ jammy-security main restricted universe multiverse" >> /etc/apt/sources.list \
-    && echo "deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ jammy-backports main restricted universe multiverse" >> /etc/apt/sources.list \
+    && rm -f /etc/apt/sources.list.d/ubuntu.sources \
+    && echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble main restricted universe multiverse" > /etc/apt/sources.list.d/arm64.list \
+    && echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-updates main restricted universe multiverse" >> /etc/apt/sources.list.d/arm64.list \
+    && echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-security main restricted universe multiverse" >> /etc/apt/sources.list.d/arm64.list \
+    && echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-backports main restricted universe multiverse" >> /etc/apt/sources.list.d/arm64.list \
+    && echo "deb [arch=amd64] http://archive.ubuntu.com/ubuntu noble main restricted universe multiverse" > /etc/apt/sources.list.d/amd64.list \
+    && echo "deb [arch=amd64] http://archive.ubuntu.com/ubuntu noble-updates main restricted universe multiverse" >> /etc/apt/sources.list.d/amd64.list \
+    && echo "deb [arch=amd64] http://archive.ubuntu.com/ubuntu noble-security main restricted universe multiverse" >> /etc/apt/sources.list.d/amd64.list \
+    && echo "deb [arch=amd64] http://archive.ubuntu.com/ubuntu noble-backports main restricted universe multiverse" >> /etc/apt/sources.list.d/amd64.list \
     && apt-get update \
     && apt-get install -y --no-install-recommends \
     libc6:amd64 libstdc++6:amd64 lib32z1 libbz2-1.0:amd64 \
