@@ -1,7 +1,26 @@
 # ================================
-# Build image
+# Build image & Prepare SDK
 # ================================
-FROM swift:5.9-jammy AS build
+FROM swift:5.10-noble AS build
+
+# 安裝 SDK 管理工具所需的依賴 (僅在 build 階段使用)
+RUN apt-get update && apt-get install -y \
+    openjdk-17-jre-headless \
+    unzip \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# 安裝 Android SDK Command Line Tools
+ENV ANDROID_HOME /opt/android-sdk
+RUN mkdir -p ${ANDROID_HOME}/cmdline-tools && \
+    wget https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O cmdline-tools.zip && \
+    unzip -q cmdline-tools.zip -d ${ANDROID_HOME}/cmdline-tools && \
+    mv ${ANDROID_HOME}/cmdline-tools/cmdline-tools ${ANDROID_HOME}/cmdline-tools/latest && \
+    rm cmdline-tools.zip
+
+# 設定 PATH 並安裝 Build-Tools
+ENV PATH ${PATH}:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools
+RUN yes | sdkmanager "build-tools;34.0.0"
 
 WORKDIR /APKParser
 
@@ -12,49 +31,53 @@ COPY . .
 WORKDIR /APKParser/Example
 
 # 3. 解析依賴並構建
-# 目錄名稱 /APKParser 現在匹配 Package 名稱，解決 SPM 解析問題
 RUN swift build -c release --static-swift-stdlib
 
 # ================================
 # Run image
 # ================================
-FROM ubuntu:jammy
+FROM ubuntu:noble
 
-# 安裝 runtime 依賴
-# openjdk-17-jre: 用於 apktool (runtime 只需要 JRE)
-# imagemagick: 用於處理圖片
-# wget, unzip: 用於下載和解壓工具
-RUN apt-get update && apt-get install -y \
-    openjdk-17-jre \
+# 設定環境變數
+ENV ANDROID_HOME /opt/android-sdk
+
+# 安裝 runtime 依賴 (使用 --no-install-recommends 減少體積)
+# 使用 openjdk-17-jre-headless
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    openjdk-17-jre-headless \
     imagemagick \
     wget \
     unzip \
     && rm -rf /var/lib/apt/lists/*
 
+# 針對 ARM64 架構 (如 Apple Silicon) 啟用 Multi-Arch 支援以運行 x86 工具
+RUN if [ "$(dpkg --print-architecture)" = "arm64" ]; then \
+    dpkg --add-architecture amd64 \
+    && rm -f /etc/apt/sources.list.d/ubuntu.sources \
+    && echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble main restricted universe multiverse" > /etc/apt/sources.list.d/arm64.list \
+    && echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-updates main restricted universe multiverse" >> /etc/apt/sources.list.d/arm64.list \
+    && echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-security main restricted universe multiverse" >> /etc/apt/sources.list.d/arm64.list \
+    && echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-backports main restricted universe multiverse" >> /etc/apt/sources.list.d/arm64.list \
+    && echo "deb [arch=amd64] http://archive.ubuntu.com/ubuntu noble main restricted universe multiverse" > /etc/apt/sources.list.d/amd64.list \
+    && echo "deb [arch=amd64] http://archive.ubuntu.com/ubuntu noble-updates main restricted universe multiverse" >> /etc/apt/sources.list.d/amd64.list \
+    && echo "deb [arch=amd64] http://archive.ubuntu.com/ubuntu noble-security main restricted universe multiverse" >> /etc/apt/sources.list.d/amd64.list \
+    && echo "deb [arch=amd64] http://archive.ubuntu.com/ubuntu noble-backports main restricted universe multiverse" >> /etc/apt/sources.list.d/amd64.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+    libc6:amd64 libstdc++6:amd64 lib32z1 libbz2-1.0:amd64 \
+    && rm -rf /var/lib/apt/lists/*; \
+    fi
+
 # 安裝 apktool
-RUN wget https://raw.githubusercontent.com/iBotPeaches/Apktool/master/scripts/linux/apktool -O apktool && \
-    wget https://bitbucket.org/iBotPeaches/apktool/downloads/apktool_2.9.3.jar -O apktool.jar && \
+RUN wget -q https://raw.githubusercontent.com/iBotPeaches/Apktool/master/scripts/linux/apktool -O apktool && \
+    wget -q https://bitbucket.org/iBotPeaches/apktool/downloads/apktool_2.9.3.jar -O apktool.jar && \
     chmod +x apktool && \
     chmod +x apktool.jar && \
     mv apktool /usr/local/bin/ && \
     mv apktool.jar /usr/local/bin/
 
-# 安裝 Android SDK Command Line Tools
-ENV ANDROID_HOME /opt/android-sdk
-RUN mkdir -p ${ANDROID_HOME}/cmdline-tools && \
-    wget https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O cmdline-tools.zip && \
-    unzip cmdline-tools.zip -d ${ANDROID_HOME}/cmdline-tools && \
-    mv ${ANDROID_HOME}/cmdline-tools/cmdline-tools ${ANDROID_HOME}/cmdline-tools/latest && \
-    rm cmdline-tools.zip
-
-# 設定環境變數以便使用 sdkmanager
-ENV PATH ${PATH}:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools
-
-# 安裝 Android Build-Tools (包含 zipalign, apksigner)
-RUN yes | sdkmanager "build-tools;34.0.0"
-
-# 將 Build-Tools 加入 PATH
-ENV PATH ${PATH}:${ANDROID_HOME}/build-tools/34.0.0
+# 只從 build 階段複製需要的 build-tools (不包含 cmdline-tools)
+COPY --from=build ${ANDROID_HOME}/build-tools ${ANDROID_HOME}/build-tools
 
 WORKDIR /app
 

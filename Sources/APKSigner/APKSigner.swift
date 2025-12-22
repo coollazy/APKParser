@@ -130,9 +130,23 @@ public enum APKSigner {
 
 // MARK: 取得 android build tool 最新版本的路徑
 extension APKSigner {
-    private static func androidBuildToolEnvironmentVariable() -> [String: String] {
-        let androidHome = FileManager.default.homeDirectoryForCurrentUser
+    
+    private static var androidHomePath: String {
+        if let envHome = ProcessInfo.processInfo.environment["ANDROID_HOME"], !envHome.isEmpty {
+            return envHome
+        }
+        
+#if os(Linux)
+        return FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Android/Sdk").path
+#else
+        return FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent("Library/Android/sdk").path
+#endif
+    }
+    
+    private static func androidBuildToolEnvironmentVariable() -> [String: String] {
+        let androidHome = androidHomePath
         
         var environment = [String: String]()
         if let androidBuildToolsPath = latestAndroidBuildToolsPath() {
@@ -146,8 +160,7 @@ extension APKSigner {
     }
         
     private static func latestAndroidBuildToolsPath() -> String? {
-        let androidHome = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent("Library/Android/sdk").path
+        let androidHome = androidHomePath
         let buildToolsDir = androidHome + "/build-tools"
 
         guard let subdirs = try? FileManager.default.contentsOfDirectory(atPath: buildToolsDir) else {

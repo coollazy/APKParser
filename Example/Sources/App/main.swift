@@ -29,6 +29,7 @@ do {
 }
 catch {
     print("❌❌ APKSigner verify zipAlgin failed => \(error.localizedDescription)")
+    exit(1)
 }
 
 do {
@@ -38,6 +39,7 @@ do {
 }
 catch {
     print("❌❌ APKSigner verify Signature failed => \(error.localizedDescription)")
+    exit(1)
 }
 
 do {
@@ -59,4 +61,5 @@ do {
 }
 catch {
     print("❌❌ \(error.localizedDescription)")
+    exit(1)
 }
