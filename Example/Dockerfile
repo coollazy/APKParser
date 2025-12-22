@@ -43,8 +43,16 @@ ENV ANDROID_HOME /opt/android-sdk
 
 # 安裝 runtime 依賴 (使用 --no-install-recommends 減少體積)
 # 使用 openjdk-17-jre-headless
-# 安裝 Multi-Arch 支援庫
-RUN dpkg --add-architecture amd64 \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    openjdk-17-jre-headless \
+    imagemagick \
+    wget \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+# 針對 ARM64 架構 (如 Apple Silicon) 啟用 Multi-Arch 支援以運行 x86 工具
+RUN if [ "$(dpkg --print-architecture)" = "arm64" ]; then \
+    dpkg --add-architecture amd64 \
     && sed -i 's/deb/deb [arch=arm64]/' /etc/apt/sources.list \
     && echo "deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ jammy main restricted universe multiverse" >> /etc/apt/sources.list \
     && echo "deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ jammy-updates main restricted universe multiverse" >> /etc/apt/sources.list \
@@ -52,12 +60,9 @@ RUN dpkg --add-architecture amd64 \
     && echo "deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ jammy-backports main restricted universe multiverse" >> /etc/apt/sources.list \
     && apt-get update \
     && apt-get install -y --no-install-recommends \
-    openjdk-17-jre-headless \
-    imagemagick \
-    wget \
-    unzip \
     libc6:amd64 libstdc++6:amd64 lib32z1 libbz2-1.0:amd64 \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/*; \
+    fi
 
 # 安裝 apktool
 RUN wget -q https://raw.githubusercontent.com/iBotPeaches/Apktool/master/scripts/linux/apktool -O apktool && \
