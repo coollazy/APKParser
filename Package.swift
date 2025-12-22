@@ -21,6 +21,12 @@ let package = Package(
                 "APKSigner"
             ]
         ),
+        .library(
+            name: "Command",
+            targets: [
+                "Command"
+            ]
+        ),
     ],
     dependencies: [
         .package(url: "https://github.com/coollazy/Image.git", from: "1.2.1"),

@@ -1,7 +1,26 @@
 # ================================
-# Build image
+# Build image & Prepare SDK
 # ================================
 FROM swift:5.9-jammy AS build
+
+# 安裝 SDK 管理工具所需的依賴 (僅在 build 階段使用)
+RUN apt-get update && apt-get install -y \
+    openjdk-17-jre-headless \
+    unzip \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# 安裝 Android SDK Command Line Tools
+ENV ANDROID_HOME /opt/android-sdk
+RUN mkdir -p ${ANDROID_HOME}/cmdline-tools && \
+    wget https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O cmdline-tools.zip && \
+    unzip -q cmdline-tools.zip -d ${ANDROID_HOME}/cmdline-tools && \
+    mv ${ANDROID_HOME}/cmdline-tools/cmdline-tools ${ANDROID_HOME}/cmdline-tools/latest && \
+    rm cmdline-tools.zip
+
+# 設定 PATH 並安裝 Build-Tools
+ENV PATH ${PATH}:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools
+RUN yes | sdkmanager "build-tools;34.0.0"
 
 WORKDIR /APKParser
 
@@ -12,7 +31,6 @@ COPY . .
 WORKDIR /APKParser/Example
 
 # 3. 解析依賴並構建
-# 目錄名稱 /APKParser 現在匹配 Package 名稱，解決 SPM 解析問題
 RUN swift build -c release --static-swift-stdlib
 
 # ================================
@@ -20,44 +38,37 @@ RUN swift build -c release --static-swift-stdlib
 # ================================
 FROM ubuntu:jammy
 
-# 安裝 runtime 依賴
-# openjdk-17-jre: 用於 apktool (runtime 只需要 JRE)
-# imagemagick: 用於處理圖片
-# wget, unzip: 用於下載和解壓工具
-RUN apt-get update && apt-get install -y \
-    openjdk-17-jre \
+# 設定環境變數
+ENV ANDROID_HOME /opt/android-sdk
+
+# 安裝 runtime 依賴 (使用 --no-install-recommends 減少體積)
+# 使用 openjdk-17-jre-headless
+# 安裝 Multi-Arch 支援庫
+RUN dpkg --add-architecture amd64 \
+    && sed -i 's/deb/deb [arch=arm64]/' /etc/apt/sources.list \
+    && echo "deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ jammy main restricted universe multiverse" >> /etc/apt/sources.list \
+    && echo "deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ jammy-updates main restricted universe multiverse" >> /etc/apt/sources.list \
+    && echo "deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ jammy-security main restricted universe multiverse" >> /etc/apt/sources.list \
+    && echo "deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ jammy-backports main restricted universe multiverse" >> /etc/apt/sources.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+    openjdk-17-jre-headless \
     imagemagick \
     wget \
     unzip \
-    libc++-dev \
+    libc6:amd64 libstdc++6:amd64 lib32z1 libbz2-1.0:amd64 \
     && rm -rf /var/lib/apt/lists/*
 
 # 安裝 apktool
-RUN wget https://raw.githubusercontent.com/iBotPeaches/Apktool/master/scripts/linux/apktool -O apktool && \
-    wget https://bitbucket.org/iBotPeaches/apktool/downloads/apktool_2.9.3.jar -O apktool.jar && \
+RUN wget -q https://raw.githubusercontent.com/iBotPeaches/Apktool/master/scripts/linux/apktool -O apktool && \
+    wget -q https://bitbucket.org/iBotPeaches/apktool/downloads/apktool_2.9.3.jar -O apktool.jar && \
     chmod +x apktool && \
     chmod +x apktool.jar && \
     mv apktool /usr/local/bin/ && \
     mv apktool.jar /usr/local/bin/
 
-# 安裝 Android SDK Command Line Tools
-ENV ANDROID_HOME /opt/android-sdk
-RUN mkdir -p ${ANDROID_HOME}/cmdline-tools && \
-    wget https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O cmdline-tools.zip && \
-    unzip cmdline-tools.zip -d ${ANDROID_HOME}/cmdline-tools && \
-    mv ${ANDROID_HOME}/cmdline-tools/cmdline-tools ${ANDROID_HOME}/cmdline-tools/latest && \
-    rm cmdline-tools.zip
-
-# 設定環境變數以便使用 sdkmanager
-ENV PATH ${PATH}:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools
-
-# 安裝 Android Build-Tools (包含 zipalign, apksigner)
-RUN yes | sdkmanager "build-tools;34.0.0"
-
-# 檢查 zipalign 的依賴 (用於診斷)
-RUN ldd ${ANDROID_HOME}/build-tools/34.0.0/zipalign || echo "ldd failed"
-
-# 將 Build-Tools 加入 PATH
+# 只從 build 階段複製需要的 build-tools (不包含 cmdline-tools)
+COPY --from=build ${ANDROID_HOME}/build-tools ${ANDROID_HOME}/build-tools
 
 WORKDIR /app
 
