@@ -25,7 +25,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/coollazy/Image.git", from: "1.2.1"),
         .package(url: "https://github.com/jpsim/Yams.git", .upToNextMinor(from: "5.1.2")),
-        .package(url: "https://github.com/coollazy/APKSignKey.git", from: "1.0.0"),
+        .package(url: "https://github.com/coollazy/APKSignKey.git", from: "1.1.0"),
     ],
     targets: [
         .target(
