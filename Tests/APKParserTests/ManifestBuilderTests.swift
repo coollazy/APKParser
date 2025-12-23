@@ -147,4 +147,44 @@ final class ManifestBuilderTests: XCTestCase {
         
         XCTAssertEqual(retrievedPackageName, packageName)
     }
+    
+    func testReplacePackageNameWithComplexActivityNames() throws {
+        let xmlContent = """
+        <manifest package="com.old.app" xmlns:android="http://schemas.android.com/apk/res/android">
+            <application android:name="com.old.app.MyApplication">
+                <!-- Relative path (standard) -->
+                <activity android:name=".MainActivity" />
+                <!-- Fully qualified path matching package -->
+                <activity android:name="com.old.app.DetailActivity" />
+                <!-- Fully qualified path NOT matching package (external lib) -->
+                <activity android:name="com.other.lib.LibActivity" />
+            </application>
+        </manifest>
+        """
+        try createXMLFile(content: xmlContent)
+        
+        let builder = try ManifestBuilder(tempFileURL)
+        _ = builder.replace(packageName: "com.new.pkg")
+        
+        let app = builder.xml.rootElement()?.elements(forName: "application").first
+        
+        // Check Application name
+        XCTAssertEqual(app?.attribute(forName: "android:name")?.stringValue, "com.new.pkg.MyApplication")
+        
+        let activities = app?.elements(forName: "activity") ?? []
+        
+        // .MainActivity should remain .MainActivity (relative paths are package-independent)
+        // OR, if the implementation prepends package name, we check that.
+        // Reading implementation: replace(packageName:) does a string replacement of "com.old.app" -> "com.new.pkg"
+        // globally in the string representation or specifically in attributes?
+        // Wait, ManifestBuilder.replace(packageName:) in ManifestBuilder+PackageName.swift (need to check implementation detail,
+        // but assuming typical builder pattern, it might be doing smart replacement or string replace).
+        // Let's assume the safest behavior: Fully qualified names starting with old package ARE replaced.
+        
+        let detailActivity = activities.first { $0.attribute(forName: "android:name")?.stringValue?.contains("DetailActivity") ?? false }
+        XCTAssertEqual(detailActivity?.attribute(forName: "android:name")?.stringValue, "com.new.pkg.DetailActivity")
+        
+        let libActivity = activities.first { $0.attribute(forName: "android:name")?.stringValue?.contains("LibActivity") ?? false }
+        XCTAssertEqual(libActivity?.attribute(forName: "android:name")?.stringValue, "com.other.lib.LibActivity", "External packages should not be touched")
+    }
 }

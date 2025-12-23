@@ -95,4 +95,13 @@ final class IconBuilderTests: XCTestCase {
         let iconURL = folderURL.appendingPathComponent("ic_launcher.png")
         XCTAssertFalse(FileManager.default.fileExists(atPath: iconURL.path), "Should not create file if it didn't exist")
     }
+    
+    func testInitInvalidFileFormat() throws {
+        let textFileURL = tempDir.appendingPathComponent("fake_image.png")
+        try "This is text, not an image".write(to: textFileURL, atomically: true, encoding: .utf8)
+        
+        XCTAssertThrowsError(try IconBuilder(sourceURL: textFileURL, iconType: .rectangle(iconName: nil))) { error in
+            XCTAssertEqual(error as? IconBuilderError, IconBuilderError.invalidImageFormat)
+        }
+    }
 }
