@@ -63,7 +63,7 @@ let package = Package(
         .testTarget(
             name: "APKParserTests",
             dependencies: ["APKParser", "APKSigner", "Command"],
-            resources: [.copy("Resources")]
+            resources: [.process("Resources")]
         ),
     ]
 )

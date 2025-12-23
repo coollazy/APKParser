@@ -16,35 +16,22 @@ final class IconBuilderTests: XCTestCase {
         super.tearDown()
     }
     
-    private func createPNG(size: CGSize, url: URL) -> Bool {
-        let width = Int(size.width)
-        let height = Int(size.height)
-        
-        // Use ImageMagick 'convert' which is installed in both macOS and Linux CI environments
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-        process.arguments = ["convert", "-size", "\(width)x\(height)", "xc:red", url.path]
-        
-        do {
-            try process.run()
-            process.waitUntilExit()
-            return process.terminationStatus == 0
-        } catch {
-            print("Failed to run convert: \(error)")
-            return false
-        }
-    }
-    
     func testInitSuccess() throws {
-        let imageURL = tempDir.appendingPathComponent("valid.png")
-        _ = createPNG(size: CGSize(width: 1024, height: 1024), url: imageURL)
+        // Use pre-generated 1024x1024 image from Resources
+        guard let imageURL = Bundle.module.url(forResource: "new_icon", withExtension: "png") else {
+            XCTFail("new_icon.png not found in bundle")
+            return
+        }
         
         XCTAssertNoThrow(try IconBuilder(sourceURL: imageURL, iconType: .rectangle(iconName: nil)))
     }
     
     func testInitInvalidSize() throws {
-        let imageURL = tempDir.appendingPathComponent("small.png")
-        _ = createPNG(size: CGSize(width: 500, height: 500), url: imageURL)
+        // Use pre-generated 500x500 image from Resources
+        guard let imageURL = Bundle.module.url(forResource: "small_icon", withExtension: "png") else {
+            XCTFail("small_icon.png not found in bundle")
+            return
+        }
         
         XCTAssertThrowsError(try IconBuilder(sourceURL: imageURL, iconType: .rectangle(iconName: nil))) { error in
             XCTAssertEqual(error as? IconBuilderError, IconBuilderError.invalidImageSize)
@@ -53,8 +40,10 @@ final class IconBuilderTests: XCTestCase {
     
     func testBuildReplacement() throws {
         // 1. Prepare Source Image
-        let sourceImageURL = tempDir.appendingPathComponent("source.png")
-        _ = createPNG(size: CGSize(width: 1024, height: 1024), url: sourceImageURL)
+        guard let sourceImageURL = Bundle.module.url(forResource: "new_icon", withExtension: "png") else {
+             XCTFail("new_icon.png not found in bundle")
+             return
+        }
         
         // 2. Prepare Destination Structure
         let resDir = tempDir.appendingPathComponent("res")
@@ -86,8 +75,10 @@ final class IconBuilderTests: XCTestCase {
     
     func testBuildNoReplacementIfFileDoesNotExist() throws {
         // 1. Prepare Source
-        let sourceImageURL = tempDir.appendingPathComponent("source.png")
-        _ = createPNG(size: CGSize(width: 1024, height: 1024), url: sourceImageURL)
+        guard let sourceImageURL = Bundle.module.url(forResource: "new_icon", withExtension: "png") else {
+             XCTFail("new_icon.png not found in bundle")
+             return
+        }
         
         // 2. Prepare Empty Destination
         let resDir = tempDir.appendingPathComponent("res_empty")
