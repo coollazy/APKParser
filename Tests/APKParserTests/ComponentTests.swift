@@ -31,6 +31,7 @@ final class ComponentTests: XCTestCase {
     var tempYAMLURL: URL!
     var tempAppDir: URL!
     var tempResDir: URL!
+    var tempAssetsDir: URL!
     
     override func setUp() {
         super.setUp()
@@ -41,6 +42,9 @@ final class ComponentTests: XCTestCase {
         tempResDir = tempAppDir.appendingPathComponent("res")
         let valuesDir = tempResDir.appendingPathComponent("values")
         try? FileManager.default.createDirectory(at: valuesDir, withIntermediateDirectories: true)
+        
+        tempAssetsDir = tempAppDir.appendingPathComponent("assets")
+        try? FileManager.default.createDirectory(at: tempAssetsDir, withIntermediateDirectories: true)
         
         tempManifestURL = tempAppDir.appendingPathComponent("AndroidManifest.xml")
         tempYAMLURL = tempAppDir.appendingPathComponent("apktool.yml")
@@ -103,7 +107,8 @@ final class ComponentTests: XCTestCase {
             yamlBuilder: yamlBuilder,
             stringsBuilder: stringsBuilder,
             appDirectory: tempAppDir,
-            resDirectory: tempResDir
+            resDirectory: tempResDir,
+            assetsDirectory: tempAssetsDir
         )
         
         // 3. Apply Component
@@ -125,5 +130,61 @@ final class ComponentTests: XCTestCase {
         let newStrings = try StringsBuilder(tempStringsURL)
         let appName = newStrings.xml.rootElement()?.elements(forName: "string").first?.stringValue
         XCTAssertEqual(appName, "Component Modified App")
+    }
+    
+    func testAssetsDirectoryInContext() throws {
+        // Init Builders (similar to other tests)
+        let manifestBuilder = try ManifestBuilder(tempManifestURL)
+        let yamlBuilder = try YAMLBuilder(tempYAMLURL)
+        let stringsBuilder = try StringsBuilder(tempStringsURL)
+        
+        // Create Context with a known assetsDirectory
+        let expectedAssetsDir = tempAppDir.appendingPathComponent("custom_assets_dir")
+        try FileManager.default.createDirectory(at: expectedAssetsDir, withIntermediateDirectories: true)
+        
+        let context = APKContext(
+            manifestBuilder: manifestBuilder,
+            yamlBuilder: yamlBuilder,
+            stringsBuilder: stringsBuilder,
+            appDirectory: tempAppDir,
+            resDirectory: tempResDir,
+            assetsDirectory: expectedAssetsDir
+        )
+        
+        // Verify that the assetsDirectory in context matches the expected one
+        XCTAssertEqual(context.assetsDirectory, expectedAssetsDir, "The assetsDirectory in APKContext should match the one provided.")
+    }
+    
+    func testGoogleComponentMissingMetaData() throws {
+        // Setup XML with NO meta-data
+        let manifestContent = """
+        <manifest package="com.example.test" xmlns:android="http://schemas.android.com/apk/res/android">
+            <application>
+                <!-- No API Key here -->
+            </application>
+        </manifest>
+        """
+        try manifestContent.write(to: tempManifestURL, atomically: true, encoding: .utf8)
+        
+        // Init logic
+        let manifestBuilder = try ManifestBuilder(tempManifestURL)
+        let yamlBuilder = try YAMLBuilder(tempYAMLURL)
+        let stringsBuilder = try StringsBuilder(tempStringsURL)
+        let context = APKContext(
+            manifestBuilder: manifestBuilder,
+            yamlBuilder: yamlBuilder,
+            stringsBuilder: stringsBuilder,
+            appDirectory: tempAppDir,
+            resDirectory: tempResDir,
+            assetsDirectory: tempAssetsDir
+        )
+        
+        let googleComponent = GoogleComponent(apiKey: "NEW_API_KEY")
+        try googleComponent.apply(context)
+        
+        // Verify: Should still have NO meta-data (Silent failure is the current expected behavior)
+        let app = manifestBuilder.xml.rootElement()?.elements(forName: "application").first
+        let meta = app?.elements(forName: "meta-data") ?? []
+        XCTAssertTrue(meta.isEmpty, "Should not add meta-data if it didn't exist")
     }
 }

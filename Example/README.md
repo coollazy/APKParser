@@ -12,7 +12,20 @@ This example project demonstrates how to use the `APKParser` library to automate
 
 ## 🚀 Running on macOS (Native)
 
-To run the example directly on your Mac, you need Xcode or the Swift toolchain installed.
+To run the example directly on your Mac, you need to ensure the following tools are installed and available in your system PATH:
+
+### Prerequisites
+
+1.  **Swift 5.9+** (via Xcode or Toolchain)
+2.  **Apktool**: Required for decoding/building APKs.
+    ```bash
+    brew install apktool
+    ```
+3.  **Android SDK Build-Tools** (`zipalign`, `apksigner`):
+    *   Install via Android Studio or command line tools.
+    *   Ensure `ANDROID_HOME` environment variable is set (e.g., `export ANDROID_HOME=~/Library/Android/sdk`).
+
+### Steps to Run
 
 1.  Navigate to the Example directory:
     ```bash
@@ -23,6 +36,19 @@ To run the example directly on your Mac, you need Xcode or the Swift toolchain i
     ```bash
     swift run
     ```
+
+## 🔍 What this Example Does
+
+When you run the example, it performs the following automated workflow:
+
+1.  **Verification**: Checks if the input APK (`Resources/test.apk`) is valid (aligned and signed).
+2.  **Parsing & Modification**:
+    *   Decodes the APK.
+    *   Changes the **Package Name** to `com.coollazy.apkparser.example`.
+    *   Changes the **App Name** to `APKParser Example`.
+    *   Replaces the **App Icon** (both square and round versions) with new assets.
+3.  **Rebuilding**: Repacks the modified resources into a new APK.
+4.  **Signing**: Signs the new APK (`apks/new.apk`) using a generated debug key, making it ready to install.
 
 ---
 

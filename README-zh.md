@@ -117,7 +117,7 @@
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/coollazy/APKParser.git", from: "1.1.2")
+    .package(url: "https://github.com/coollazy/APKParser.git", from: "1.2.0")
 ]
 ```
 
