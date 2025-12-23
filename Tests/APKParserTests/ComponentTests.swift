@@ -31,6 +31,7 @@ final class ComponentTests: XCTestCase {
     var tempYAMLURL: URL!
     var tempAppDir: URL!
     var tempResDir: URL!
+    var tempAssetsDir: URL!
     
     override func setUp() {
         super.setUp()
@@ -41,6 +42,9 @@ final class ComponentTests: XCTestCase {
         tempResDir = tempAppDir.appendingPathComponent("res")
         let valuesDir = tempResDir.appendingPathComponent("values")
         try? FileManager.default.createDirectory(at: valuesDir, withIntermediateDirectories: true)
+        
+        tempAssetsDir = tempAppDir.appendingPathComponent("assets")
+        try? FileManager.default.createDirectory(at: tempAssetsDir, withIntermediateDirectories: true)
         
         tempManifestURL = tempAppDir.appendingPathComponent("AndroidManifest.xml")
         tempYAMLURL = tempAppDir.appendingPathComponent("apktool.yml")
@@ -103,7 +107,8 @@ final class ComponentTests: XCTestCase {
             yamlBuilder: yamlBuilder,
             stringsBuilder: stringsBuilder,
             appDirectory: tempAppDir,
-            resDirectory: tempResDir
+            resDirectory: tempResDir,
+            assetsDirectory: tempAssetsDir
         )
         
         // 3. Apply Component
