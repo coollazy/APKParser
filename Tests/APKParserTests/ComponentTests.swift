@@ -131,4 +131,27 @@ final class ComponentTests: XCTestCase {
         let appName = newStrings.xml.rootElement()?.elements(forName: "string").first?.stringValue
         XCTAssertEqual(appName, "Component Modified App")
     }
+    
+    func testAssetsDirectoryInContext() throws {
+        // Init Builders (similar to other tests)
+        let manifestBuilder = try ManifestBuilder(tempManifestURL)
+        let yamlBuilder = try YAMLBuilder(tempYAMLURL)
+        let stringsBuilder = try StringsBuilder(tempStringsURL)
+        
+        // Create Context with a known assetsDirectory
+        let expectedAssetsDir = tempAppDir.appendingPathComponent("custom_assets_dir")
+        try FileManager.default.createDirectory(at: expectedAssetsDir, withIntermediateDirectories: true)
+        
+        let context = APKContext(
+            manifestBuilder: manifestBuilder,
+            yamlBuilder: yamlBuilder,
+            stringsBuilder: stringsBuilder,
+            appDirectory: tempAppDir,
+            resDirectory: tempResDir,
+            assetsDirectory: expectedAssetsDir
+        )
+        
+        // Verify that the assetsDirectory in context matches the expected one
+        XCTAssertEqual(context.assetsDirectory, expectedAssetsDir, "The assetsDirectory in APKContext should match the one provided.")
+    }
 }
