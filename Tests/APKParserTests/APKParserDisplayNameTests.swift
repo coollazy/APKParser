@@ -77,20 +77,28 @@ final class APKParserDisplayNameTests: XCTestCase {
     // MARK: - replace(displayName:) Setter Tests
 
     func testReplaceDisplayNameModifiesManifestReference() throws {
-        // Original: android:label="@string/app_name"
+        // Original: android:label="@string/app_name" (or whatever is in test.apk)
         let newDisplayName = "Modified Empty App"
         parser.replace(displayName: newDisplayName)
         
-        // Verify strings.xml was updated
+        // 1. First, find out what the manifest is actually pointing to dynamically
+        let manifestBuilder = try getManifestBuilder()
+        let currentLabel = try XCTUnwrap(manifestBuilder.applicationLabel, "Manifest should have a label")
+        
+        // Ensure the test condition is valid (it must be a resource reference to test this case)
+        XCTAssertTrue(currentLabel.hasPrefix("@string/"), "Test apk should define label as a resource reference")
+        let resourceName = String(currentLabel.dropFirst("@string/".count))
+        
+        // 2. Verify strings.xml was updated using the DYNAMIC resource name found above
         let stringsBuilder = try getStringsBuilder()
         let updatedAppName = stringsBuilder.xml.rootElement()?.elements(forName: "string").first {
-            $0.attribute(forName: "name")?.stringValue == "app_name"
+            $0.attribute(forName: "name")?.stringValue == resourceName
         }?.stringValue
-        XCTAssertEqual(updatedAppName, newDisplayName, "strings.xml app_name should be updated")
         
-        // Verify Manifest still points to @string/app_name
-        let manifestBuilder = try getManifestBuilder()
-        XCTAssertEqual(manifestBuilder.applicationLabel, "@string/app_name")
+        XCTAssertEqual(updatedAppName, newDisplayName, "strings.xml resource '\(resourceName)' should be updated")
+        
+        // Verify Manifest still points to the same reference
+        XCTAssertEqual(manifestBuilder.applicationLabel, currentLabel)
         
         // Verify getter reflects change
         XCTAssertEqual(try parser.displayName(), newDisplayName)
@@ -99,6 +107,42 @@ final class APKParserDisplayNameTests: XCTestCase {
         try parser.build(toPath: tempOutputAPKURL)
         let modifiedParser = try APKParser(apkURL: tempOutputAPKURL)
         XCTAssertEqual(try modifiedParser.displayName(), newDisplayName)
+    }
+
+    func testReplaceDisplayNameWithCustomResourceName() throws {
+        // 1. Setup: Modify Manifest to point to a custom non-standard resource name
+        let customResourceName = "my_custom_game_title"
+        let manifestBuilder = try getManifestBuilder()
+        manifestBuilder.applicationLabel = "@string/\(customResourceName)"
+        try manifestBuilder.build(to: parser.androidManifestURL)
+        
+        // 2. Setup: Inject this custom resource into strings.xml (simulate it exists)
+        // We reuse/hijack an existing string element to avoid complex XML creation logic in test
+        let stringsBuilder = try getStringsBuilder()
+        if let existingString = stringsBuilder.xml.rootElement()?.elements(forName: "string").first {
+            existingString.removeAttribute(forName: "name")
+            existingString.addAttribute(XMLNode.attribute(withName: "name", stringValue: customResourceName) as! XMLNode)
+            existingString.stringValue = "Old Title"
+            try stringsBuilder.build(to: parser.stringsURL)
+        } else {
+            XCTFail("Failed to setup test: strings.xml seems empty")
+        }
+        
+        // 3. Action: Replace display name
+        let newDisplayName = "Super Custom App"
+        parser.replace(displayName: newDisplayName)
+        
+        // 4. Verification: Check if the CUSTOM resource was updated
+        let updatedStringsBuilder = try getStringsBuilder()
+        let updatedValue = updatedStringsBuilder.xml.rootElement()?.elements(forName: "string").first {
+            $0.attribute(forName: "name")?.stringValue == customResourceName
+        }?.stringValue
+        
+        XCTAssertEqual(updatedValue, newDisplayName, "Should update the custom resource name found in manifest")
+        
+        // Verify Manifest still points to the custom reference
+        let finalManifest = try getManifestBuilder()
+        XCTAssertEqual(finalManifest.applicationLabel, "@string/\(customResourceName)")
     }
 
     func testReplaceDisplayNameModifiesHardcodedLabelInManifest() throws {
