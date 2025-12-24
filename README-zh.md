@@ -16,6 +16,7 @@
   - 替換應用程式顯示名稱 (Display Name)。
   - 替換應用程式套件名稱 (Package Name)。
   - 替換 App 圖標（包含啟動圖標和圓形圖標）。
+  - 替換版本代碼 (Version Code) 和版本名稱 (Version Name)。
   - 修改字串資源 (Strings)。
 - **讀取 APK 資訊**：取得版本代碼 (Version Code) 和版本名稱 (Version Name)。
 - **重新打包 APK**：將修改後的資源重新打包成新的 APK。
@@ -144,7 +145,9 @@ if let version = parser.versionWithCode() {
 do {
     try parser
         .replace(packageName: "com.example.newpackage")
-        .replace(displayName: "My New App Name")
+        .replace(displayName: "我的新應用程式名稱")
+        .replace(versionCode: "2")
+        .replace(versionName: "1.1.0")
         .replace(iconURL: URL(fileURLWithPath: "/path/to/icon.png"))
         .replace(roundIconURL: URL(fileURLWithPath: "/path/to/round_icon.png"))
 } catch {
@@ -157,6 +160,38 @@ try parser.build(toPath: newApkURL)
 
 print("APK 已重新打包至: \(newApkURL.path)")
 // 注意: 重新打包後的 APK 尚未簽名，無法直接安裝。
+```
+
+### Components (元件)
+
+使用標準元件可以輕鬆整合 SDK 或修改特定配置。
+
+```swift
+import APKParser
+
+let parser = try APKParser(apkURL: apkURL)
+
+// 應用 Google 元件 (Maps API Key, App ID)
+try parser.apply(GoogleComponent(
+    apiKey: "YOUR_GOOGLE_API_KEY",
+    appID: "YOUR_GOOGLE_APP_ID"
+))
+
+// 應用 Facebook 元件
+try parser.apply(FacebookComponent(
+    appID: "YOUR_FB_APP_ID",
+    clientToken: "YOUR_FB_CLIENT_TOKEN",
+    displayName: "我的 FB 應用程式"
+))
+
+// 應用深層連結 (Link Deep) 元件
+try parser.apply(LinkDeepComponent(
+    appKey: "my_app_scheme",
+    groupScheme: "my_group_scheme"
+))
+
+// 應用元件後重新打包 APK
+try parser.build(toPath: outputURL)
 ```
 
 ### APKSigner

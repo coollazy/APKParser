@@ -18,6 +18,23 @@ public class ManifestBuilder: XMLBuilder {
         }
     }
     
+    public var applicationLabel: String? {
+        get {
+            applications.first?.attribute(forName: "android:label")?.stringValue
+        }
+        set {
+            guard let app = applications.first else { return }
+            if let value = newValue {
+                // If the attribute doesn't exist, this adds it. If it exists, it updates it.
+                // FoundationXML's addAttribute replaces existing ones with same name.
+                let attr = XMLNode.attribute(withName: "android:label", stringValue: value) as! XMLNode
+                app.addAttribute(attr)
+            } else {
+                app.removeAttribute(forName: "android:label")
+            }
+        }
+    }
+    
     // MARK: Replace the android:value by android:name
     public func replaceApplicationMetaData(name: String?, value: String?) -> Self {
         guard let name = name else {
