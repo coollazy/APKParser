@@ -53,7 +53,7 @@ final class APKParserDisplayNameTests: XCTestCase {
         manifestBuilder.applicationLabel = "Hardcoded App Name"
         try manifestBuilder.build(to: parser.androidManifestURL)
         
-        XCTAssertEqual(try parser.displayName(), "Hardcoded App Name")
+        XCTAssertEqual(parser.displayName(), "Hardcoded App Name")
     }
 
     func testDisplayNameGetterManifestReferenceMissingString() throws {
@@ -62,7 +62,7 @@ final class APKParserDisplayNameTests: XCTestCase {
         manifestBuilder.applicationLabel = "@string/non_existent_app_name"
         try manifestBuilder.build(to: parser.androidManifestURL)
         
-        XCTAssertNil(try parser.displayName(), "Should return nil if string resource is missing")
+        XCTAssertNil(parser.displayName(), "Should return nil if string resource is missing")
     }
     
     func testDisplayNameGetterManifestNoLabel() throws {
@@ -71,7 +71,7 @@ final class APKParserDisplayNameTests: XCTestCase {
         manifestBuilder.applicationLabel = nil
         try manifestBuilder.build(to: parser.androidManifestURL)
         
-        XCTAssertNil(try parser.displayName(), "Should return nil if android:label is missing")
+        XCTAssertNil(parser.displayName(), "Should return nil if android:label is missing")
     }
 
     // MARK: - replace(displayName:) Setter Tests
@@ -101,12 +101,12 @@ final class APKParserDisplayNameTests: XCTestCase {
         XCTAssertEqual(manifestBuilder.applicationLabel, currentLabel)
         
         // Verify getter reflects change
-        XCTAssertEqual(try parser.displayName(), newDisplayName)
+        XCTAssertEqual(parser.displayName(), newDisplayName)
         
         // Build and verify
         try parser.build(toPath: tempOutputAPKURL)
         let modifiedParser = try APKParser(apkURL: tempOutputAPKURL)
-        XCTAssertEqual(try modifiedParser.displayName(), newDisplayName)
+        XCTAssertEqual(modifiedParser.displayName(), newDisplayName)
     }
 
     func testReplaceDisplayNameWithCustomResourceName() throws {
@@ -166,12 +166,12 @@ final class APKParserDisplayNameTests: XCTestCase {
         XCTAssertEqual(originalAppName, "EmptyApp", "strings.xml should not be touched")
         
         // Verify getter reflects change
-        XCTAssertEqual(try parser.displayName(), newDisplayName)
+        XCTAssertEqual(parser.displayName(), newDisplayName)
         
         // Build and verify
         try parser.build(toPath: tempOutputAPKURL)
         let modifiedParser = try APKParser(apkURL: tempOutputAPKURL)
-        XCTAssertEqual(try modifiedParser.displayName(), newDisplayName)
+        XCTAssertEqual(modifiedParser.displayName(), newDisplayName)
     }
 
     func testReplaceDisplayNameAddsLabelIfMissing() throws {
@@ -180,7 +180,7 @@ final class APKParserDisplayNameTests: XCTestCase {
         manifestBuilder.applicationLabel = nil
         try manifestBuilder.build(to: parser.androidManifestURL)
         
-        XCTAssertNil(try parser.displayName(), "Label should be nil initially")
+        XCTAssertNil(parser.displayName(), "Label should be nil initially")
         
         let newDisplayName = "Added Name"
         parser.replace(displayName: newDisplayName)
@@ -190,12 +190,12 @@ final class APKParserDisplayNameTests: XCTestCase {
         XCTAssertEqual(updatedManifestBuilder.applicationLabel, newDisplayName)
         
         // Verify getter reflects change
-        XCTAssertEqual(try parser.displayName(), newDisplayName)
+        XCTAssertEqual(parser.displayName(), newDisplayName)
         
         // Build and verify
         try parser.build(toPath: tempOutputAPKURL)
         let modifiedParser = try APKParser(apkURL: tempOutputAPKURL)
-        XCTAssertEqual(try modifiedParser.displayName(), newDisplayName)
+        XCTAssertEqual(modifiedParser.displayName(), newDisplayName)
     }
 
     func testReplaceDisplayNameNoOpOnNilInput() throws {
@@ -204,7 +204,7 @@ final class APKParserDisplayNameTests: XCTestCase {
         parser.replace(displayName: nil)
         
         // Verify nothing changed
-        XCTAssertEqual(try parser.displayName(), originalDisplayName)
+        XCTAssertEqual(parser.displayName(), originalDisplayName)
         // You could also verify file contents for deeper check
     }
 
@@ -214,7 +214,7 @@ final class APKParserDisplayNameTests: XCTestCase {
         parser.replace(displayName: originalDisplayName)
         
         // Verify nothing changed
-        XCTAssertEqual(try parser.displayName(), originalDisplayName)
+        XCTAssertEqual(parser.displayName(), originalDisplayName)
         // You could also verify file contents for deeper check
     }
 }
