@@ -42,7 +42,7 @@ public struct FacebookComponent: APKComponent {
             _ = context.stringsBuilder.replace(name: "facebook_app_id", value: appID)
             
             // Also try to replace meta-data if it was hardcoded (less common but possible)
-            context.manifestBuilder.replaceApplicationMetaData(
+            _ = context.manifestBuilder.replaceApplicationMetaData(
                 name: "com.facebook.sdk.ApplicationId",
                 value: appID
             )
@@ -51,7 +51,7 @@ public struct FacebookComponent: APKComponent {
         if let clientToken = clientToken {
             _ = context.stringsBuilder.replace(name: "facebook_client_token", value: clientToken)
             
-            context.manifestBuilder.replaceApplicationMetaData(
+            _ = context.manifestBuilder.replaceApplicationMetaData(
                 name: "com.facebook.sdk.ClientToken",
                 value: clientToken
             )

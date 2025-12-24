@@ -22,7 +22,7 @@ public struct GoogleComponent: APKComponent {
     public func apply(_ context: APKContext) throws {
         // 1. Update AndroidManifest.xml
         if let apiKey = apiKey {
-            context.manifestBuilder.replaceApplicationMetaData(
+            _ = context.manifestBuilder.replaceApplicationMetaData(
                 name: "com.google.android.geo.API_KEY",
                 value: apiKey
             )

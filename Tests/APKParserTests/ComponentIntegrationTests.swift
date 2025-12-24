@@ -1,11 +1,13 @@
 import XCTest
 @testable import APKParser
+@testable import Command
 #if canImport(FoundationXML)
 import FoundationXML
 #endif
 
 final class ComponentIntegrationTests: XCTestCase {
     
+    // MARK: - Dummy Environment Properties
     var tempManifestURL: URL!
     var tempStringsURL: URL!
     var tempYAMLURL: URL!
@@ -13,9 +15,13 @@ final class ComponentIntegrationTests: XCTestCase {
     var tempResDir: URL!
     var tempAssetsDir: URL!
     
+    // MARK: - Real APK Properties
+    var realAPKURL: URL!
+    var tempOutputAPKURL: URL!
+
     override func setUp() {
         super.setUp()
-        // Create a fake app directory structure
+        // 1. Setup Dummy Environment
         tempAppDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try? FileManager.default.createDirectory(at: tempAppDir, withIntermediateDirectories: true)
         
@@ -26,19 +32,25 @@ final class ComponentIntegrationTests: XCTestCase {
         tempAssetsDir = tempAppDir.appendingPathComponent("assets")
         try? FileManager.default.createDirectory(at: tempAssetsDir, withIntermediateDirectories: true)
         
-        
         tempManifestURL = tempAppDir.appendingPathComponent("AndroidManifest.xml")
         tempYAMLURL = tempAppDir.appendingPathComponent("apktool.yml")
         tempStringsURL = valuesDir.appendingPathComponent("strings.xml")
         
-        // Create dummy files (ensure strings.xml always exists for builder initialization)
         createDummyYAML()
         try? "<resources></resources>".write(to: tempStringsURL, atomically: true, encoding: .utf8)
+        
+        // 2. Setup Real APK Environment
+        realAPKURL = Bundle.module.url(forResource: "test", withExtension: "apk")
+        // Initialize tempOutputAPKURL to ensure it's not nil
+        tempOutputAPKURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + "_output.apk")
     }
     
     
     override func tearDown() {
         try? FileManager.default.removeItem(at: tempAppDir)
+        if let url = tempOutputAPKURL {
+            try? FileManager.default.removeItem(at: url)
+        }
         super.tearDown()
     }
     
@@ -53,7 +65,7 @@ final class ComponentIntegrationTests: XCTestCase {
         try? content.write(to: tempYAMLURL, atomically: true, encoding: .utf8)
     }
     
-    // MARK: - GoogleComponent Tests
+    // MARK: - Unit Tests (Dummy Files)
     
     func testGoogleComponent() throws {
         // Setup XML
@@ -84,12 +96,12 @@ final class ComponentIntegrationTests: XCTestCase {
             yamlBuilder: yamlBuilder,
             stringsBuilder: stringsBuilder,
             appDirectory: tempAppDir,
-                        resDirectory: tempResDir,
-                        assetsDirectory: tempAssetsDir
-                    )
+            resDirectory: tempResDir,
+            assetsDirectory: tempAssetsDir
+        )
             
-                    let googleComponent = GoogleComponent(apiKey: "NEW_API_KEY", appID: "NEW_APP_ID")
-                    try googleComponent.apply(context)
+        let googleComponent = GoogleComponent(apiKey: "NEW_API_KEY", appID: "NEW_APP_ID")
+        try googleComponent.apply(context)
         
         try manifestBuilder.build(to: tempManifestURL)
         try stringsBuilder.build(to: tempStringsURL)
@@ -109,11 +121,8 @@ final class ComponentIntegrationTests: XCTestCase {
         XCTAssertEqual(getString("google_server_client_id_web"), "NEW_APP_ID")
     }
     
-    // MARK: - FacebookComponent Tests
-    
     func testFacebookComponent() throws {
         // Setup XML
-        // Note: Facebook App ID in meta-data might be hardcoded or a reference. We test replacement of a hardcoded value.
         let manifestContent = """
         <manifest package="com.example.test" xmlns:android="http://schemas.android.com/apk/res/android">
             <application>
@@ -171,11 +180,8 @@ final class ComponentIntegrationTests: XCTestCase {
         XCTAssertEqual(getString("facebook_app_name"), "New FB App")
     }
     
-    // MARK: - LinkDeepComponent Tests
-    
     func testLinkDeepComponent() throws {
         // Setup XML
-        // Include placeholders to be replaced
         let manifestContent = """
         <manifest package="com.example.test" xmlns:android="http://schemas.android.com/apk/res/android">
             <application>
@@ -197,8 +203,7 @@ final class ComponentIntegrationTests: XCTestCase {
         // Apply Component
         let manifestBuilder = try ManifestBuilder(tempManifestURL)
         let yamlBuilder = try YAMLBuilder(tempYAMLURL)
-        let stringsBuilder = try StringsBuilder(tempStringsURL) // Using existing one even if not modified
-        try? "<resources></resources>".write(to: tempStringsURL, atomically: true, encoding: .utf8)
+        let stringsBuilder = try StringsBuilder(tempStringsURL)
         
         let context = APKContext(
             manifestBuilder: manifestBuilder,
@@ -226,16 +231,90 @@ final class ComponentIntegrationTests: XCTestCase {
         let intentFilter = app?.elements(forName: "activity").first?.elements(forName: "intent-filter").first
         let datas = intentFilter?.elements(forName: "data") ?? []
         
-        // Find scheme matching the new key
         let scheme1 = datas.first { $0.attribute(forName: "android:scheme")?.stringValue == "my_new_app_key" }
         XCTAssertNotNil(scheme1)
         
         let scheme2 = datas.first { $0.attribute(forName: "android:scheme")?.stringValue == "my_new_group_scheme" }
         XCTAssertNotNil(scheme2)
         
-        // Verify placeholders are gone
         let placeholder1 = datas.first { $0.attribute(forName: "android:scheme")?.stringValue == "${LINK_DEEP_APP_KEY}" }
         XCTAssertNil(placeholder1)
+    }
+    
+    // MARK: - Integration Tests (Real APK)
+    
+    func testGoogleComponentBuildRealAPK() throws {
+        guard let realAPKURL = realAPKURL else {
+             XCTFail("Skipping test because test.apk is missing")
+             return
+        }
+        
+        let parser = try APKParser(apkURL: realAPKURL)
+        
+        // Apply GoogleComponent
+        let googleComponent = GoogleComponent(apiKey: "REAL_TEST_API_KEY", appID: "REAL_TEST_APP_ID")
+        try parser.apply(googleComponent)
+        
+        // Build
+        do {
+            try parser.build(toPath: tempOutputAPKURL)
+            XCTAssertTrue(FileManager.default.fileExists(atPath: tempOutputAPKURL.path))
+        } catch {
+            print("GoogleComponent Build Failed: \(error)")
+            let nsError = error as NSError
+            print("Error info: \(nsError.userInfo)")
+            XCTFail("Failed to build APK after applying GoogleComponent")
+        }
+    }
+    
+    func testFacebookComponentBuildRealAPK() throws {
+        guard let realAPKURL = realAPKURL else {
+             XCTFail("Skipping test because test.apk is missing")
+             return
+        }
+        
+        let parser = try APKParser(apkURL: realAPKURL)
+        
+        // Apply FacebookComponent
+        let fbComponent = FacebookComponent(appID: "123456789", clientToken: "token_123", displayName: "My FB App")
+        try parser.apply(fbComponent)
+        
+        // Build
+        do {
+            try parser.build(toPath: tempOutputAPKURL)
+            XCTAssertTrue(FileManager.default.fileExists(atPath: tempOutputAPKURL.path))
+        } catch {
+            print("FacebookComponent Build Failed: \(error)")
+            let nsError = error as NSError
+            print("Error info: \(nsError.userInfo)")
+            XCTFail("Failed to build APK after applying FacebookComponent")
+        }
+    }
+    
+    func testLinkDeepComponentBuildRealAPK() throws {
+        guard let realAPKURL = realAPKURL else {
+             XCTFail("Skipping test because test.apk is missing")
+             return
+        }
+        
+        let parser = try APKParser(apkURL: realAPKURL)
+        
+        // Apply LinkDeepComponent
+        // Note: For LinkDeepComponent to actually replace something, the placeholders must exist in the original manifest.
+        // Even if they don't, ensuring the build succeeds verifies that the parsing/saving process is safe.
+        let linkComponent = LinkDeepComponent(appKey: "my_deep_key", groupScheme: "my_group_scheme")
+        try parser.apply(linkComponent)
+        
+        // Build
+        do {
+            try parser.build(toPath: tempOutputAPKURL)
+            XCTAssertTrue(FileManager.default.fileExists(atPath: tempOutputAPKURL.path))
+        } catch {
+            print("LinkDeepComponent Build Failed: \(error)")
+            let nsError = error as NSError
+            print("Error info: \(nsError.userInfo)")
+            XCTFail("Failed to build APK after applying LinkDeepComponent")
+        }
     }
 }
 

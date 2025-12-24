@@ -77,9 +77,8 @@ final class APKParserIntegrationTests: XCTestCase {
             print("Error details: \(error)") // Print the whole error object
             print("Localized Description: \(error.localizedDescription)")
             // 如果是 NSError，可以尝试打印 userInfo
-            if let nsError = error as? NSError {
-                print("Error UserInfo: \(nsError.userInfo)")
-            }
+            let nsError = error as NSError
+            print("Error UserInfo: \(nsError.userInfo)")
             XCTFail("APK build failed with detailed error above.")
             return // Prevent further execution if build fails
         }
@@ -124,6 +123,53 @@ final class APKParserIntegrationTests: XCTestCase {
         }
     }
 
+    func testReplaceVersionInfo() throws {
+        let parser = try APKParser(apkURL: realAPKURL)
+        let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + "_version.apk")
+        defer { try? FileManager.default.removeItem(at: outputURL) }
+
+        let originalVersionCode = try XCTUnwrap(parser.versionCode())
+        let originalVersionName = try XCTUnwrap(parser.version())
+
+        let newVersionCode = "99"
+        let newVersionName = "9.9.9"
+
+        XCTAssertNotEqual(originalVersionCode, newVersionCode)
+        XCTAssertNotEqual(originalVersionName, newVersionName)
+
+        // Test replace with nil
+        parser.replace(versionCode: nil)
+        parser.replace(versionName: nil)
+        XCTAssertEqual(parser.versionCode(), originalVersionCode, "Replace with nil should be no-op")
+        XCTAssertEqual(parser.version(), originalVersionName, "Replace with nil should be no-op")
+
+        // Perform actual replacement
+        parser.replace(versionCode: newVersionCode)
+        parser.replace(versionName: newVersionName)
+
+        // Verify parser's internal state
+        XCTAssertEqual(parser.versionCode(), newVersionCode)
+        XCTAssertEqual(parser.version(), newVersionName)
+
+        // Build and verify the new APK
+        do {
+            try parser.build(toPath: outputURL)
+            XCTAssertTrue(FileManager.default.fileExists(atPath: outputURL.path), "Version modification APK was not built.")
+
+            let modifiedParser = try APKParser(apkURL: outputURL)
+            XCTAssertEqual(modifiedParser.versionCode(), newVersionCode)
+            XCTAssertEqual(modifiedParser.version(), newVersionName)
+
+        } catch {
+            print("--- APKTool Build Error ---")
+            print("Error details: \(error)")
+            let nsError = error as NSError
+            print("Error UserInfo: \(nsError.userInfo)")
+            XCTFail("Build failed for version modification: \(error)")
+        }
+    }
+
+
     func testNoModificationBuildRealAPK() throws {
         // 1. 解析原始 test.apk
         let parser = try APKParser(apkURL: realAPKURL)
@@ -154,7 +200,6 @@ final class APKParserIntegrationTests: XCTestCase {
         XCTAssertEqual(modifiedParser.versionCode(), originalVersionCode, "Version code should remain unchanged.")
         XCTAssertEqual(modifiedParser.version(), originalVersionName, "Version name should remain unchanged.")
     }
-
     func testReplaceIconRealAPK() throws {
         // Assume these icon files exist in the test bundle for replacement
         let newIconURL = try XCTUnwrap(Bundle.module.url(forResource: "new_icon", withExtension: "png"), "new_icon.png resource not found.")

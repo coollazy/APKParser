@@ -14,6 +14,7 @@ A powerful Swift library for decompiling, modifying, and recompiling Android APK
   - Replace Application Display Name.
   - Replace Application Package Name.
   - Replace App Icons (Launcher and Round Icons).
+  - Replace Version Code and Version Name.
   - Modify String Resources.
 - **Read APK Info**: Retrieve Version Code and Version Name.
 - **Recompile APKs**: Build a new APK from modified sources.
@@ -115,7 +116,7 @@ Add the dependency to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/coollazy/APKParser.git", from: "1.2.0")
+    .package(url: "https://github.com/coollazy/APKParser.git", from: "1.2.1")
 ]
 ```
 
@@ -143,6 +144,8 @@ do {
     try parser
         .replace(packageName: "com.example.newpackage")
         .replace(displayName: "My New App Name")
+        .replace(versionCode: "2")
+        .replace(versionName: "1.1.0")
         .replace(iconURL: URL(fileURLWithPath: "/path/to/icon.png"))
         .replace(roundIconURL: URL(fileURLWithPath: "/path/to/round_icon.png"))
 } catch {
@@ -155,6 +158,38 @@ try parser.build(toPath: newApkURL)
 
 print("APK Rebuilt at: \(newApkURL.path)")
 // Note: The rebuilt APK is unsigned and cannot be installed yet.
+```
+
+### Components
+
+Use standard components to easily integrate SDKs or modify specific configurations.
+
+```swift
+import APKParser
+
+let parser = try APKParser(apkURL: apkURL)
+
+// Apply Google Component (Maps API Key, App ID)
+try parser.apply(GoogleComponent(
+    apiKey: "YOUR_GOOGLE_API_KEY",
+    appID: "YOUR_GOOGLE_APP_ID"
+))
+
+// Apply Facebook Component
+try parser.apply(FacebookComponent(
+    appID: "YOUR_FB_APP_ID",
+    clientToken: "YOUR_FB_CLIENT_TOKEN",
+    displayName: "My FB App"
+))
+
+// Apply Deep Link Component
+try parser.apply(LinkDeepComponent(
+    appKey: "my_app_scheme",
+    groupScheme: "my_group_scheme"
+))
+
+// Build the APK after applying components
+try parser.build(toPath: outputURL)
 ```
 
 ### APKSigner

@@ -66,8 +66,8 @@ final class APKParserFailureTests: XCTestCase {
         // Create the directory structure manually since mock apktool didn't
         try FileManager.default.createDirectory(at: parser.appDirectory, withIntermediateDirectories: true)
         
-        // Write malformed YAML
-        let malformedContent = "This is not valid YAML"
+        // Write malformed YAML (truly invalid syntax)
+        let malformedContent = "invalid: [ unclosed sequence"
         try malformedContent.write(to: parser.apktoolYamlURL, atomically: true, encoding: .utf8)
         
         // Create valid Manifest so that part passes
@@ -81,7 +81,7 @@ final class APKParserFailureTests: XCTestCase {
         let newManifest = try String(contentsOf: parser.androidManifestURL)
         XCTAssertTrue(newManifest.contains("com.new"))
         
-        // Verify YAML content is unchanged (or check if it crashed - it shouldn't)
+        // Verify YAML content is unchanged (because parsing failed)
         let yamlContent = try String(contentsOf: parser.apktoolYamlURL)
         XCTAssertEqual(yamlContent, malformedContent)
     }

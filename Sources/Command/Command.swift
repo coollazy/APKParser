@@ -34,10 +34,17 @@ public struct Command {
         process.standardOutput = outputPipe
         process.standardError = errorPipe
         
+        let lock = NSLock()
+        var outputData = Data()
+        var errorData = Data()
+        
         // 即時讀取輸出
         outputPipe.fileHandleForReading.readabilityHandler = { fileHandle in
             let data = fileHandle.availableData
             if !data.isEmpty {
+                lock.lock()
+                outputData.append(data)
+                lock.unlock()
                 if logEnable, let output = String(data: data, encoding: .utf8) {
                     print("\(output.trimmingCharacters(in: .whitespacesAndNewlines))")
                 }
@@ -48,6 +55,9 @@ public struct Command {
         errorPipe.fileHandleForReading.readabilityHandler = { fileHandle in
             let data = fileHandle.availableData
             if !data.isEmpty {
+                lock.lock()
+                errorData.append(data)
+                lock.unlock()
                 if logEnable, let error = String(data: data, encoding: .utf8) {
                     print("Error: \(error.trimmingCharacters(in: .whitespacesAndNewlines))")
                 }
@@ -56,14 +66,21 @@ public struct Command {
         
         // 設定完成回調(Docker container 裡面運行的時候，一定要用 terminatinHandler 才不會卡住)
         process.terminationHandler = { process in
-            let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
-            let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
-            
             outputPipe.fileHandleForReading.readabilityHandler = nil
             errorPipe.fileHandleForReading.readabilityHandler = nil
             
-            let output = String(data: outputData, encoding: .utf8) ?? ""
-            let error = String(data: errorData, encoding: .utf8) ?? ""
+            let remainingOutput = outputPipe.fileHandleForReading.readDataToEndOfFile()
+            let remainingError = errorPipe.fileHandleForReading.readDataToEndOfFile()
+            
+            lock.lock()
+            outputData.append(remainingOutput)
+            errorData.append(remainingError)
+            let finalOutputData = outputData
+            let finalErrorData = errorData
+            lock.unlock()
+            
+            let output = String(data: finalOutputData, encoding: .utf8) ?? ""
+            let error = String(data: finalErrorData, encoding: .utf8) ?? ""
             let combinedOutput = output + error
             
             if process.terminationStatus == 0 {
