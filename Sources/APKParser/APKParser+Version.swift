@@ -1,32 +1,75 @@
 import Foundation
 
 extension APKParser {
-    /// Retrieves the version name of the APK.
+    
+    /// The version name of the application.
     ///
-    /// This method parses the `apktool.yml` file to extract the `versionName` defined in the APK.
-    ///
-    /// - Returns: The version name as a `String` if available, or `nil` if parsing fails.
+    /// - Returns: The version name as a `String` if available, otherwise `nil`.
     public func version() -> String? {
         let builder = try? YAMLBuilder(apktoolYamlURL)
-        return builder?.yaml.versionInfo.versionName
+        return builder?.versionName
     }
     
-    /// Retrieves the version code of the APK.
+    /// The version code of the application.
     ///
-    /// This method parses the `apktool.yml` file to extract the `versionCode` defined in the APK.
-    ///
-    /// - Returns: The version code as a `String` if available, or `nil` if parsing fails.
+    /// - Returns: The version code as a `String` if available, otherwise `nil`.
     public func versionCode() -> String? {
         let builder = try? YAMLBuilder(apktoolYamlURL)
-        return builder?.yaml.versionInfo.versionCode
+        return builder?.versionCode
     }
     
-    /// Retrieves a combined string of version name and version code.
+    /// The combined version string in the format "VersionName.VersionCode".
     ///
-    /// - Returns: A string in the format `"{versionName}.{versionCode}"` (e.g., "1.0.0.100").
-    /// - Throws: An error if the `apktool.yml` file cannot be parsed.
+    /// - Returns: The combined version string, or `nil` if reading fails or fields are missing.
+    /// - Throws: An error if the `apktool.yml` file cannot be read.
     public func versionWithCode() throws -> String? {
         let builder = try YAMLBuilder(apktoolYamlURL)
-        return "\(builder.yaml.versionInfo.versionName).\(builder.yaml.versionInfo.versionCode)"
+        guard let name = builder.versionName,
+              let code = builder.versionCode else {
+            return nil
+        }
+        return "\(name).\(code)"
+    }
+    
+    /// Replaces the version code of the application in `apktool.yml`.
+    ///
+    /// If the provided `versionCode` is `nil`, no operation is performed.
+    /// - Parameter versionCode: The new version code as a `String`.
+    /// - Returns: The `APKParser` instance for method chaining.
+    @discardableResult
+    public func replace(versionCode: String?) -> Self {
+        guard let versionCode = versionCode else {
+            return self
+        }
+        
+        do {
+            let builder = try YAMLBuilder(apktoolYamlURL)
+            builder.versionCode = versionCode
+            try builder.build(to: apktoolYamlURL)
+        } catch {
+            debugPrint("[APKParser Replace Version Code ERROR] \(error.localizedDescription)")
+        }
+        return self
+    }
+    
+    /// Replaces the version name of the application in `apktool.yml`.
+    ///
+    /// If the provided `versionName` is `nil`, no operation is performed.
+    /// - Parameter versionName: The new version name as a `String`.
+    /// - Returns: The `APKParser` instance for method chaining.
+    @discardableResult
+    public func replace(versionName: String?) -> Self {
+        guard let versionName = versionName else {
+            return self
+        }
+        
+        do {
+            let builder = try YAMLBuilder(apktoolYamlURL)
+            builder.versionName = versionName
+            try builder.build(to: apktoolYamlURL)
+        } catch {
+            debugPrint("[APKParser Replace Version Name ERROR] \(error.localizedDescription)")
+        }
+        return self
     }
 }

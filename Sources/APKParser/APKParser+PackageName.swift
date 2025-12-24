@@ -34,9 +34,9 @@ extension APKParser {
                 .replace(packageName: packageName)
                 .build(to: androidManifestURL)
             
-            let content = try String(contentsOf: apktoolYamlURL)
-            let newContent = content.replacingOccurrences(of: "renameManifestPackage: null", with: "renameManifestPackage: \(packageName)")
-            try newContent.write(to: apktoolYamlURL, atomically: true, encoding: .utf8)
+            let yamlBuilder = try YAMLBuilder(apktoolYamlURL)
+            yamlBuilder.renameManifestPackage = packageName
+            try yamlBuilder.build(to: apktoolYamlURL)
         }
         catch {
             debugPrint("[APKParser Replace Package Name ERROR] \(error.localizedDescription)")
