@@ -261,9 +261,8 @@ final class ComponentIntegrationTests: XCTestCase {
             XCTAssertTrue(FileManager.default.fileExists(atPath: tempOutputAPKURL.path))
         } catch {
             print("GoogleComponent Build Failed: \(error)")
-            if let nsError = error as? NSError {
-                 print("Error info: \(nsError.userInfo)")
-            }
+            let nsError = error as NSError
+            print("Error info: \(nsError.userInfo)")
             XCTFail("Failed to build APK after applying GoogleComponent")
         }
     }
@@ -286,9 +285,8 @@ final class ComponentIntegrationTests: XCTestCase {
             XCTAssertTrue(FileManager.default.fileExists(atPath: tempOutputAPKURL.path))
         } catch {
             print("FacebookComponent Build Failed: \(error)")
-            if let nsError = error as? NSError {
-                 print("Error info: \(nsError.userInfo)")
-            }
+            let nsError = error as NSError
+            print("Error info: \(nsError.userInfo)")
             XCTFail("Failed to build APK after applying FacebookComponent")
         }
     }
@@ -313,9 +311,8 @@ final class ComponentIntegrationTests: XCTestCase {
             XCTAssertTrue(FileManager.default.fileExists(atPath: tempOutputAPKURL.path))
         } catch {
             print("LinkDeepComponent Build Failed: \(error)")
-            if let nsError = error as? NSError {
-                 print("Error info: \(nsError.userInfo)")
-            }
+            let nsError = error as NSError
+            print("Error info: \(nsError.userInfo)")
             XCTFail("Failed to build APK after applying LinkDeepComponent")
         }
     }

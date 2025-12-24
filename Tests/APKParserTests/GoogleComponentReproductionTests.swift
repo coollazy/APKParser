@@ -50,9 +50,8 @@ final class GoogleComponentReproductionTests: XCTestCase {
             XCTAssertTrue(FileManager.default.fileExists(atPath: tempOutputAPKURL.path))
         } catch {
             print("Build FAILED with error: \(error)")
-            if let nsError = error as? NSError {
-                 print("Error info: \(nsError.userInfo)")
-            }
+            let nsError = error as NSError
+            print("Error info: \(nsError.userInfo)")
             XCTFail("Build failed when GoogleComponent is applied. See console output for details.")
         }
     }
