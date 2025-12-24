@@ -22,7 +22,7 @@ public struct LinkDeepComponent: APKComponent {
     public func apply(_ context: APKContext) throws {
         // 1. Update AndroidManifest.xml meta-data for LINK_DEEP_APP_KEY
         if let appKey = appKey {
-            context.manifestBuilder.replaceApplicationMetaData(
+            _ = context.manifestBuilder.replaceApplicationMetaData(
                 name: "LINK_DEEP_APP_KEY",
                 value: appKey
             )

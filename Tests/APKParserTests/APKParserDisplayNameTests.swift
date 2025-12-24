@@ -1,4 +1,7 @@
 import XCTest
+#if canImport(FoundationXML)
+import FoundationXML
+#endif
 @testable import APKParser
 @testable import Command
 
@@ -121,7 +124,10 @@ final class APKParserDisplayNameTests: XCTestCase {
         let stringsBuilder = try getStringsBuilder()
         if let existingString = stringsBuilder.xml.rootElement()?.elements(forName: "string").first {
             existingString.removeAttribute(forName: "name")
-            existingString.addAttribute(XMLNode.attribute(withName: "name", stringValue: customResourceName) as! XMLNode)
+            let attr = XMLNode(kind: .attribute)
+            attr.name = "name"
+            attr.stringValue = customResourceName
+            existingString.addAttribute(attr)
             existingString.stringValue = "Old Title"
             try stringsBuilder.build(to: parser.stringsURL)
         } else {

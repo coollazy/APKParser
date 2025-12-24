@@ -23,7 +23,7 @@ final class APKParserTests: XCTestCase {
     override func setUp() {
         super.setUp()
         tempAPKURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".apk")
-        FileManager.default.createFile(atPath: tempAPKURL.path, contents: Data(), attributes: nil)
+        _ = FileManager.default.createFile(atPath: tempAPKURL.path, contents: Data(), attributes: nil)
     }
     
     override func tearDown() {

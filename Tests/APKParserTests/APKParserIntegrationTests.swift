@@ -77,9 +77,8 @@ final class APKParserIntegrationTests: XCTestCase {
             print("Error details: \(error)") // Print the whole error object
             print("Localized Description: \(error.localizedDescription)")
             // 如果是 NSError，可以尝试打印 userInfo
-            if let nsError = error as? NSError {
-                print("Error UserInfo: \(nsError.userInfo)")
-            }
+            let nsError = error as NSError
+            print("Error UserInfo: \(nsError.userInfo)")
             XCTFail("APK build failed with detailed error above.")
             return // Prevent further execution if build fails
         }
@@ -164,9 +163,8 @@ final class APKParserIntegrationTests: XCTestCase {
         } catch {
             print("--- APKTool Build Error ---")
             print("Error details: \(error)")
-            if let nsError = error as? NSError {
-                print("Error UserInfo: \(nsError.userInfo)")
-            }
+            let nsError = error as NSError
+            print("Error UserInfo: \(nsError.userInfo)")
             XCTFail("Build failed for version modification: \(error)")
         }
     }

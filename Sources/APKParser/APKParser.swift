@@ -42,14 +42,14 @@ public class APKParser {
         ])
     }
 
-//    deinit {
-//        do {
-//            try FileManager.default.removeItem(atPath: workingDirectory.path)
-//        }
-//        catch {
-//            debugPrint("[APKParser Clear ERROR] \(error.localizedDescription)")
-//        }
-//    }
+    deinit {
+        do {
+            try FileManager.default.removeItem(atPath: workingDirectory.path)
+        }
+        catch {
+            debugPrint("[APKParser Clear ERROR] \(error.localizedDescription)")
+        }
+    }
 
     /// Rebuilds the APK from the modified resources.
     ///
