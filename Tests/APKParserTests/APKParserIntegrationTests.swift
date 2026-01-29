@@ -306,8 +306,12 @@ final class APKParserIntegrationTests: XCTestCase {
         let invalidPath = URL(fileURLWithPath: "/dev/null/output.apk")
 
         XCTAssertThrowsError(try parser.build(toPath: invalidPath)) { error in
-            // Check for APKParserError or a more general error indicating failure
-            XCTAssertTrue(error is APKParserError || (error as NSError).domain == "Command Error apktool", "Expected an error when building to an invalid path.")
+            // Check for APKParserError, Command Error, or Cocoa Error (from moveItem)
+            let nsError = error as NSError
+            XCTAssertTrue(error is APKParserError || 
+                         nsError.domain == "Command Error apktool" || 
+                         nsError.domain == NSCocoaErrorDomain, 
+                         "Expected an error when building to an invalid path. Got: \(error)")
         }
     }
 }
