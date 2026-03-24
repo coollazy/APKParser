@@ -200,11 +200,11 @@ final class APKParserIntegrationTests: XCTestCase {
         XCTAssertEqual(modifiedParser.versionCode(), originalVersionCode, "Version code should remain unchanged.")
         XCTAssertEqual(modifiedParser.version(), originalVersionName, "Version name should remain unchanged.")
     }
-    func testReplaceIconRealAPK() throws {
+    func testReplaceIconRealAPK() async throws {
         // Assume these icon files exist in the test bundle for replacement
         let newIconURL = try XCTUnwrap(Bundle.module.url(forResource: "new_icon", withExtension: "png"), "new_icon.png resource not found.")
         
-        let parser = try APKParser(apkURL: realAPKURL)
+        let parser = try await APKParser(apkURL: realAPKURL)
             .replace(iconURL: newIconURL)
         
         let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + "_icon.apk")
@@ -220,11 +220,11 @@ final class APKParserIntegrationTests: XCTestCase {
         // TODO: Deeper verification: Decompile outputURL and check the icon actual content/size.
     }
 
-    func testReplaceRoundIconRealAPK() throws {
+    func testReplaceRoundIconRealAPK() async throws {
         // Assume these icon files exist in the test bundle for replacement
         let newRoundIconURL = try XCTUnwrap(Bundle.module.url(forResource: "new_icon_round", withExtension: "png"), "new_icon_round.png resource not found.")
         
-        let parser = try APKParser(apkURL: realAPKURL)
+        let parser = try await APKParser(apkURL: realAPKURL)
             .replace(roundIconURL: newRoundIconURL)
         
         let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + "_round_icon.apk")
@@ -261,7 +261,7 @@ final class APKParserIntegrationTests: XCTestCase {
         try APKSigner.verifySignature(from: signedApkURL)
     }
 
-    func testAllModificationsRealAPK() throws {
+    func testAllModificationsRealAPK() async throws {
         // Assume these icon files exist in the test bundle for replacement
         let newIconURL = try XCTUnwrap(Bundle.module.url(forResource: "new_icon", withExtension: "png"), "new_icon.png resource not found.")
         let newRoundIconURL = try XCTUnwrap(Bundle.module.url(forResource: "new_icon_round", withExtension: "png"), "new_icon_round.png resource not found.")
@@ -274,7 +274,7 @@ final class APKParserIntegrationTests: XCTestCase {
         let newDisplayName = "Full Modified App"
         
         // 3. 执行所有修改
-        let modifiedParser = try parser
+        let modifiedParser = try await parser
             .replace(packageName: newPackageName)
             .replace(displayName: newDisplayName)
             .replace(iconURL: newIconURL)
