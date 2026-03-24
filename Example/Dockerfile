@@ -31,6 +31,9 @@ COPY . .
 WORKDIR /APKParser/Example
 
 # 3. 解析依賴並構建
+RUN swift package resolve \
+    $([ -f ./Package.resolved ] && echo "--force-resolved-versions" || true)
+    
 RUN swift build -c release --static-swift-stdlib
 
 # ================================
@@ -48,6 +51,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     imagemagick \
     wget \
     unzip \
+    libcurl4 \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 # 針對 ARM64 架構 (如 Apple Silicon) 啟用 Multi-Arch 支援以運行 x86 工具
@@ -69,12 +74,10 @@ RUN if [ "$(dpkg --print-architecture)" = "arm64" ]; then \
     fi
 
 # 安裝 apktool
-RUN wget -q https://raw.githubusercontent.com/iBotPeaches/Apktool/master/scripts/linux/apktool -O apktool && \
-    wget -q https://bitbucket.org/iBotPeaches/apktool/downloads/apktool_2.9.3.jar -O apktool.jar && \
-    chmod +x apktool && \
-    chmod +x apktool.jar && \
-    mv apktool /usr/local/bin/ && \
-    mv apktool.jar /usr/local/bin/
+RUN wget -q https://raw.githubusercontent.com/iBotPeaches/Apktool/master/scripts/linux/apktool -O /usr/local/bin/apktool && \
+    wget -q https://github.com/iBotPeaches/Apktool/releases/download/v2.9.3/apktool_2.9.3.jar -O /usr/local/bin/apktool.jar && \
+    chmod +x /usr/local/bin/apktool && \
+    chmod +x /usr/local/bin/apktool.jar
 
 # 只從 build 階段複製需要的 build-tools (不包含 cmdline-tools)
 COPY --from=build ${ANDROID_HOME}/build-tools ${ANDROID_HOME}/build-tools

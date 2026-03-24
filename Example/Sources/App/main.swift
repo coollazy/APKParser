@@ -44,11 +44,12 @@ catch {
 
 do {
     // 反組譯 APK 並替換部分資訊
-    let parser = try APKParser(apkURL: apkURL)
+    let parser = try await APKParser(apkURL: apkURL)
         .replace(packageName: "com.coollazy.apkparser.example")
         .replace(displayName: "APKParser Example")
         .replace(iconURL: iconURL)
         .replace(roundIconURL: roundIconURL)
+    
     print("APK Version => \(parser.version() ?? "**")")
     
     // 重新打包 APK
@@ -58,8 +59,13 @@ do {
     // APK 簽名
     try APKSigner.signature(from: newApkURL, to: newApkURL)
     print("APKParser signature apk successfully! ✅ => \(newApkURL)")
+    
+    // 程式結束前關閉 HTTPClient
+    try await IconBuilder.shutdown()
 }
 catch {
     print("❌❌ \(error.localizedDescription)")
+    // 發生錯誤也要嘗試關閉，或直接 exit
+    try? await IconBuilder.shutdown()
     exit(1)
 }

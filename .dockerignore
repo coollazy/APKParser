@@ -1,0 +1,32 @@
+# 忽略版本控制
+.git
+.gitignore
+.github
+
+# 忽略 macOS 系統檔案與快取
+.DS_Store
+DerivedData/
+
+# 忽略所有層級的 Swift 編譯產物
+**/.build/
+**/.swiftpm/
+
+# 忽略 IDE 專案檔 (目錄形式)
+*.xcodeproj/
+*.xcworkspace/
+.vscode/
+.idea/
+
+# 忽略測試檔案
+Tests/
+
+# 忽略 Example 專用的測試資產
+Example/apks/
+
+# 忽略說明文件與授權
+*.md
+LICENSE
+
+# 忽略 Docker 相關檔案 (避免被 COPY 進映像檔)
+Example/Dockerfile
+.dockerignore
