@@ -1,25 +1,31 @@
 import Foundation
 import Image
+import AsyncHTTPClient
+import NIOCore
+import NIOFoundationCompat
 
 /**
  用來產生  Android APK 使用的圖檔
  */
 public class IconBuilder {
+    /// 共享的 HTTPClient，使用單例 EventLoopGroup 以符合最新規範
+    private static let sharedClient = HTTPClient(eventLoopGroupProvider: .singleton)
+    
     public let tempDirectory = FileManager.default.temporaryDirectory
         .appendingPathComponent("IconBuilder\(UUID().uuidString)")
     
     private var sourceURL: URL
     private let iconType: Icon
     
-    public init(sourceURL: URL, iconType: Icon) throws {
+    public init(sourceURL: URL, iconType: Icon) async throws {
         self.sourceURL = sourceURL
         self.iconType = iconType
         
         if sourceURL.scheme != "file" {
-            self.sourceURL = try download(url: sourceURL)
+            self.sourceURL = try await download(url: sourceURL)
         }
         
-        try isValidImage(imageURL: sourceURL)
+        try isValidImage(imageURL: self.sourceURL)
     }
     
     private func isValidImage(imageURL: URL) throws {
@@ -48,10 +54,15 @@ public class IconBuilder {
             }
         }
     }
+    
+    /// 手動關閉共享的 HTTPClient，通常在應用程式即將結束時呼叫
+    public static func shutdown() async throws {
+        try await sharedClient.shutdown()
+    }
 }
 
 extension IconBuilder {
-    private func download(url: URL) throws -> URL {
+    private func download(url: URL) async throws -> URL {
         let downloadURL = tempDirectory
             .appendingPathComponent("download-" + UUID().uuidString)
             .appendingPathComponent("icon.png")
@@ -60,9 +71,17 @@ extension IconBuilder {
             try FileManager.default.createDirectory(at: downloadURL.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
         }
         
-        guard let data = try? Data(contentsOf: url) else {
+        let request = HTTPClientRequest(url: url.absoluteString)
+        let response = try await Self.sharedClient.execute(request, timeout: .seconds(30))
+        
+        guard response.status == .ok else {
             throw IconBuilderError.downloadImageFailed
         }
+        
+        // 串流下載並將其轉換為 Data
+        let body = try await response.body.collect(upTo: 10 * 1024 * 1024) // 限制 10MB
+        let data = Data(buffer: body)
+        
         try data.write(to: downloadURL)
         
         return downloadURL

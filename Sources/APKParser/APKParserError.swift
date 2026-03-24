@@ -8,6 +8,7 @@ public enum APKParserError: Error, CustomStringConvertible, LocalizedError {
     case iconImageNotFound
     case replaceCocosFailed(String)
     case replaceCocosStartupImageFailed(String)
+    case apkVerificationFailed(String)
     
     
     public var description: String {
@@ -26,6 +27,8 @@ public enum APKParserError: Error, CustomStringConvertible, LocalizedError {
             return NSLocalizedString("APKParser replace cocos resource failed !! \(errorDescription)", comment: "")
         case .replaceCocosStartupImageFailed(let errorDescription):
             return NSLocalizedString("APKParser replace cocos start up image failed !! \(errorDescription)", comment: "")
+        case .apkVerificationFailed(let path):
+            return NSLocalizedString("APKParser APK verification failed at path => \(path)", comment: "")
         }
     }
     

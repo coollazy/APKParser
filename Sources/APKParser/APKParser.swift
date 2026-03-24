@@ -54,14 +54,39 @@ public class APKParser {
     /// Rebuilds the APK from the modified resources.
     ///
     /// This method runs `apktool b` to package the contents of `appDirectory` into a new APK file.
+    /// The build is performed to a temporary file first, verified for integrity, and moved to `toPath` only upon success.
     ///
     /// - Parameter toPath: The destination file URL for the new APK.
-    /// - Throws: An error if `apktool` fails to build the APK.
+    /// - Throws: An error if `apktool` fails to build the APK or if the resulting file is corrupted.
     public func build(toPath: URL) throws {
+        let tempBuildURL = workingDirectory.appendingPathComponent("temp_build.apk")
+        
+        // 1. Build to temporary file
         try commandRunner.run("apktool", arguments: [
             "b", appDirectory.path,
-            "-o", toPath.path,
+            "-o", tempBuildURL.path,
         ])
+        
+        // 2. Verify APK integrity using zipinfo (fast check)
+        // If zipinfo fails (returns non-zero), commandRunner will throw
+        do {
+            try commandRunner.run("zipinfo", arguments: ["-t", tempBuildURL.path])
+        } catch {
+            throw APKParserError.apkVerificationFailed(tempBuildURL.path)
+        }
+        
+        // 3. Move to final destination
+        if FileManager.default.fileExists(atPath: toPath.path) {
+            try FileManager.default.removeItem(at: toPath)
+        }
+        
+        // Ensure the destination directory exists
+        let destinationDir = toPath.deletingLastPathComponent()
+        if !FileManager.default.fileExists(atPath: destinationDir.path) {
+            try FileManager.default.createDirectory(at: destinationDir, withIntermediateDirectories: true)
+        }
+        
+        try FileManager.default.moveItem(at: tempBuildURL, to: toPath)
     }
 }
 

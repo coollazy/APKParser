@@ -6,9 +6,11 @@ class MockCommandRunner: CommandRunner {
     var commands: [(command: String, arguments: [String], environment: [String: String]?)] = []
     var resultString: String = ""
     var errorToThrow: Error?
+    var onRun: ((String, [String]) -> Void)?
     
     func run(_ command: String, arguments: [String], environment: [String: String]?) throws -> String {
         commands.append((command, arguments, environment))
+        onRun?(command, arguments)
         if let error = errorToThrow {
             throw error
         }
@@ -49,15 +51,41 @@ final class APKParserTests: XCTestCase {
         // Clear init command
         mockRunner.commands.removeAll()
         
+        // Mock apktool building the file so the subsequent moveItem works
+        mockRunner.onRun = { command, args in
+            if command == "apktool", args.first == "b" {
+                if let outputIndex = args.firstIndex(of: "-o"), outputIndex + 1 < args.count {
+                    let outputPath = args[outputIndex + 1]
+                    let outputURL = URL(fileURLWithPath: outputPath)
+                    // Ensure parent directory exists and create dummy file
+                    try? FileManager.default.createDirectory(at: outputURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+                    FileManager.default.createFile(atPath: outputPath, contents: Data(), attributes: nil)
+                }
+            }
+        }
+        
         let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent("output.apk")
         try parser.build(toPath: outputURL)
         
-        XCTAssertEqual(mockRunner.commands.count, 1)
-        let command = mockRunner.commands.first
-        XCTAssertEqual(command?.command, "apktool")
-        XCTAssertEqual(command?.arguments.first, "b")
-        XCTAssertEqual(command?.arguments.contains(parser.appDirectory.path), true)
-        XCTAssertEqual(command?.arguments.contains(outputURL.path), true)
+        // Verify that 2 commands were run in sequence
+        XCTAssertEqual(mockRunner.commands.count, 2)
+        
+        // 1. Verify apktool command
+        let buildCommand = mockRunner.commands[0]
+        XCTAssertEqual(buildCommand.command, "apktool")
+        XCTAssertEqual(buildCommand.arguments.first, "b")
+        XCTAssertTrue(buildCommand.arguments.contains(parser.appDirectory.path))
+        
+        // 2. Verify zipinfo command
+        let verifyCommand = mockRunner.commands[1]
+        XCTAssertEqual(verifyCommand.command, "zipinfo")
+        XCTAssertEqual(verifyCommand.arguments.first, "-t")
+        
+        // Verify final file was "moved" to destination
+        XCTAssertTrue(FileManager.default.fileExists(atPath: outputURL.path))
+        
+        // Cleanup
+        try? FileManager.default.removeItem(at: outputURL)
     }
     
     func testInitFailsIfAPKNotFound() {

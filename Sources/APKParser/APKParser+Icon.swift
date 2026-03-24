@@ -15,7 +15,7 @@ extension APKParser {
     ///   - `APKParserError.iconImageNotFound`: If the source image file cannot be read.
     ///   - Other errors if file system operations fail.
     @discardableResult
-    public func replace(iconURL: URL?) throws -> Self {
+    public func replace(iconURL: URL?) async throws -> Self {
         guard let iconURL = iconURL else {
             return self
         }
@@ -23,7 +23,7 @@ extension APKParser {
         do {
             let manifestBuilder = try ManifestBuilder(androidManifestURL)
             
-            try IconBuilder(sourceURL: iconURL, iconType: .rectangle(iconName: manifestBuilder.iconName))
+            try await IconBuilder(sourceURL: iconURL, iconType: .rectangle(iconName: manifestBuilder.iconName))
                 .build(toResDirectory: resDirectory)
         }
         catch let error as IconBuilderError {
@@ -55,7 +55,7 @@ extension APKParser {
     ///   - `APKParserError.iconImageNotFound`: If the source image file cannot be read.
     ///   - Other errors if file system operations fail.
     @discardableResult
-    public func replace(roundIconURL: URL?) throws -> Self {
+    public func replace(roundIconURL: URL?) async throws -> Self {
         guard let roundIconURL = roundIconURL else {
             return self
         }
@@ -63,7 +63,7 @@ extension APKParser {
         do {
             let manifestBuilder = try ManifestBuilder(androidManifestURL)
             
-            try IconBuilder(sourceURL: roundIconURL, iconType: .round(iconName: manifestBuilder.iconRoundName))
+            try await IconBuilder(sourceURL: roundIconURL, iconType: .round(iconName: manifestBuilder.iconRoundName))
                 .build(toResDirectory: resDirectory)
         }
         catch let error as IconBuilderError {

@@ -16,29 +16,34 @@ final class IconBuilderTests: XCTestCase {
         super.tearDown()
     }
     
-    func testInitSuccess() throws {
+    func testInitSuccess() async throws {
         // Use pre-generated 1024x1024 image from Resources
         guard let imageURL = Bundle.module.url(forResource: "new_icon", withExtension: "png") else {
             XCTFail("new_icon.png not found in bundle")
             return
         }
         
-        XCTAssertNoThrow(try IconBuilder(sourceURL: imageURL, iconType: .rectangle(iconName: nil)))
+        _ = try await IconBuilder(sourceURL: imageURL, iconType: .rectangle(iconName: nil))
     }
     
-    func testInitInvalidSize() throws {
+    func testInitInvalidSize() async throws {
         // Use pre-generated 500x500 image from Resources
         guard let imageURL = Bundle.module.url(forResource: "small_icon", withExtension: "png") else {
             XCTFail("small_icon.png not found in bundle")
             return
         }
         
-        XCTAssertThrowsError(try IconBuilder(sourceURL: imageURL, iconType: .rectangle(iconName: nil))) { error in
-            XCTAssertEqual(error as? IconBuilderError, IconBuilderError.invalidImageSize)
+        do {
+            _ = try await IconBuilder(sourceURL: imageURL, iconType: .rectangle(iconName: nil))
+            XCTFail("Should throw invalidImageSize")
+        } catch let error as IconBuilderError {
+            XCTAssertEqual(error, IconBuilderError.invalidImageSize)
+        } catch {
+            XCTFail("Wrong error thrown: \(error)")
         }
     }
     
-    func testBuildReplacement() throws {
+    func testBuildReplacement() async throws {
         // 1. Prepare Source Image
         guard let sourceImageURL = Bundle.module.url(forResource: "new_icon", withExtension: "png") else {
              XCTFail("new_icon.png not found in bundle")
@@ -59,7 +64,7 @@ final class IconBuilderTests: XCTestCase {
         }
         
         // 3. Build
-        let builder = try IconBuilder(sourceURL: sourceImageURL, iconType: .rectangle(iconName: "ic_launcher.png"))
+        let builder = try await IconBuilder(sourceURL: sourceImageURL, iconType: .rectangle(iconName: "ic_launcher.png"))
         try builder.build(toResDirectory: resDir)
         
         // 4. Verify
@@ -73,7 +78,7 @@ final class IconBuilderTests: XCTestCase {
         }
     }
     
-    func testBuildNoReplacementIfFileDoesNotExist() throws {
+    func testBuildNoReplacementIfFileDoesNotExist() async throws {
         // 1. Prepare Source
         guard let sourceImageURL = Bundle.module.url(forResource: "new_icon", withExtension: "png") else {
              XCTFail("new_icon.png not found in bundle")
@@ -88,7 +93,7 @@ final class IconBuilderTests: XCTestCase {
         // ensure no file exists
         
         // 3. Build
-        let builder = try IconBuilder(sourceURL: sourceImageURL, iconType: .rectangle(iconName: "ic_launcher.png"))
+        let builder = try await IconBuilder(sourceURL: sourceImageURL, iconType: .rectangle(iconName: "ic_launcher.png"))
         try builder.build(toResDirectory: resDir)
         
         // 4. Verify
@@ -96,12 +101,17 @@ final class IconBuilderTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: iconURL.path), "Should not create file if it didn't exist")
     }
     
-    func testInitInvalidFileFormat() throws {
+    func testInitInvalidFileFormat() async throws {
         let textFileURL = tempDir.appendingPathComponent("fake_image.png")
         try "This is text, not an image".write(to: textFileURL, atomically: true, encoding: .utf8)
         
-        XCTAssertThrowsError(try IconBuilder(sourceURL: textFileURL, iconType: .rectangle(iconName: nil))) { error in
-            XCTAssertEqual(error as? IconBuilderError, IconBuilderError.invalidImageFormat)
+        do {
+            _ = try await IconBuilder(sourceURL: textFileURL, iconType: .rectangle(iconName: nil))
+            XCTFail("Should throw invalidImageFormat")
+        } catch let error as IconBuilderError {
+            XCTAssertEqual(error, IconBuilderError.invalidImageFormat)
+        } catch {
+            XCTFail("Wrong error thrown: \(error)")
         }
     }
 }

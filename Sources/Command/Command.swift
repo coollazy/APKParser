@@ -2,7 +2,7 @@ import Foundation
 
 public struct Command {
     @discardableResult
-    public static func run(_ command: String, arguments: [String], timeout: DispatchTime = .now() + 20, environment customEnv: [String: String]? = nil, logEnable: Bool = false) throws -> String {
+    public static func run(_ command: String, arguments: [String], timeout: DispatchTime = .now() + 600, environment customEnv: [String: String]? = nil, logEnable: Bool = false) throws -> String {
         let semaphore = DispatchSemaphore(value: 0)
         var result: Result<String, Error>?
         
